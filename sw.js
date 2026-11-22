@@ -1,4 +1,4 @@
-const CACHE = "multitrack-studio-v2";
+const CACHE = "multitrack-studio-v3";
 const CORE = [
   "./",
   "./index.html",
