@@ -1,5 +1,12 @@
-<!doctype html><html><head><meta charset=utf8><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#000000"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset="utf-8"><meta name="theme-color" content="#1a1a1c"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Multitrack">
 <title>Multitrack Studio</title>
+</head><body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: phone-style studio. Header, fixed-playhead timeline over 10 track lanes, toolbar, import/record bar. */
@@ -80,7 +87,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid #fff; outline-off
 .row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
 .grp { display: flex; align-items: flex-start; gap: 2px; }
 .grp.mid { gap: 10px; }
-.row2 { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); margin-top: 4px; }
+.row2 { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); margin-top: 4px; }
+.row2 .tb { font-size: 9.5px; padding: 4px 1px; }
+.row2 .tb svg { width: 22px; height: 22px; }
+@media (min-width: 520px) { .row2 .tb { font-size: 11px; } }
 .tb {
   appearance: none; border: 0; background: none; color: #fff;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px;
@@ -149,11 +159,190 @@ input[type=range] { width: 100%; accent-color: #fff; height: 28px; margin: 0; }
 .chk input { width: 20px; height: 20px; accent-color: #fff; flex: none; }
 .btn.rec { background: var(--rec); color: #fff; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
+.mixer { display: flex; gap: 10px; overflow-x: auto; padding: 2px 0 6px; -webkit-overflow-scrolling: touch; }
+.strip { flex: none; width: 68px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #2a2a2e; border-radius: 14px; padding: 10px 6px; }
+.strip input[type=text] { width: 100%; height: 30px; padding: 0 4px; text-align: center; font-size: 12px; border-radius: 8px; border: 1px solid var(--line); background: #1c1c1f; }
+.strip .tgl { width: 100%; height: 34px; }
+.fader { position: relative; flex: none; width: 40px; height: 170px; border-radius: 20px; background: #17171a; touch-action: none; cursor: ns-resize; overflow: hidden; }
+.fader .fill { position: absolute; left: 0; right: 0; bottom: 0; }
+.fader .mark { position: absolute; left: 0; right: 0; height: 2px; background: rgba(255, 255, 255, .55); }
+.strip.dim .fader { opacity: .45; }
+.pct { appearance: none; border: 0; background: none; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; padding: 4px; min-height: 28px; }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
 @media (min-width: 520px) {
   .tb { font-size: 11.5px; }
   .tb svg { width: 28px; height: 28px; }
 }
+
+.recview { position: fixed; inset: 0; z-index: 40; background: #000; display: flex; flex-direction: column; gap: 8px; max-width: 640px; margin: 0 auto;
+  padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.recview .rhead { display: flex; align-items: center; gap: 8px; }
+.recview .rhead h2 { flex: 1; margin: 0; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recview .rhead .ib.hid { visibility: hidden; }
+.recview .lyrow { display: flex; gap: 6px; }
+.recview .lyrow select { flex: 1; min-width: 0; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: #2a2a2e; color: #fff; font: inherit; font-size: 14px; padding: 0 8px; }
+.recview .lyview { flex: 1; min-height: 70px; max-height: none; overflow-y: auto; padding: 14px 14px 0; scroll-behavior: auto; }
+.recview .lytxt { padding-bottom: 60vh; }
+.recview .btn { height: 42px; font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; min-width: 0; }
+.recview .btn svg { width: 18px; height: 18px; flex: none; }
+.recview .sm .btn, .recview .lyrow .btn { height: 36px; font-size: 12.5px; font-weight: 500; flex: none; padding: 0 10px; }
+.recview .sm { display: flex; gap: 6px; align-items: center; }
+.recview .sm .grow { flex: 1; font-weight: 600; }
+.recview .sm .lbl { min-width: 62px; text-align: center; font-size: 12px; color: #d4d4d8; font-variant-numeric: tabular-nums; }
+.recview .lane { display: block; width: 100%; height: 96px; border-radius: 12px; touch-action: none; }
+.recview .crow { display: flex; gap: 8px; }
+.recview .crow .btn { flex: 1; }
+.recview .btn.rec { background: var(--rec); color: #fff; }
+.recview .btn.pause { background: #ffd23f; color: #000; }
+.recview .btn.warn { color: #ff7b7b; }
+.recview .note { font-size: 12.5px; }
+
+/* mixer (Edit Tracks) */
+.mx-head { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 -4px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.mx-all { appearance: none; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: #c9c9cf; display: grid; place-items: center; }
+.mx-all svg { width: 18px; height: 18px; }
+.mx-all.on { background: #fff; color: #000; border-color: #fff; }
+.mixer { gap: 8px; padding: 4px 0 2px; scrollbar-width: none; }
+.mixer::-webkit-scrollbar { display: none; }
+.strip { width: 58px; gap: 8px; background: transparent; border: 1px solid var(--line); border-radius: 12px; padding: 9px 5px 6px; transition: opacity .15s; }
+.strip .mx-num { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #a9a9b0; font-variant-numeric: tabular-nums; }
+.strip .mx-num i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.strip input[type=text] { height: 22px; padding: 0 2px; font-size: 11px; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: #e4e4e7; }
+.strip input[type=text]:focus { border-bottom-color: #8a8a92; outline: 0; }
+.mx-btns { display: flex; gap: 4px; }
+.strip .tgl { width: 24px; height: 24px; border-radius: 7px; border: 0; background: #26262a; color: #9a9aa2; display: grid; place-items: center; padding: 0; }
+.strip .tgl svg { width: 14px; height: 14px; }
+.tgl[aria-pressed="true"].m { background: #ff5d5d; color: #1a0000; }
+.tgl[aria-pressed="true"].s { background: #ffd23f; color: #1a1400; }
+.fader { width: 26px; height: 138px; border-radius: 13px; background: #121214; box-shadow: inset 0 0 0 1px #26262a; }
+.fader .fill { opacity: .9; border-radius: 0 0 13px 13px; }
+.fader .mark { height: 1px; background: rgba(255, 255, 255, .7); }
+.pct { font-size: 11px; color: #c9c9cf; padding: 2px; min-height: 22px; }
+.mx-note { font-size: 11.5px; line-height: 1.4; }
+
+/* record screen v2 */
+.recview { gap: 10px; background: #0b0b0d; }
+.recview .rhead h2 { font-size: 17px; font-weight: 600; letter-spacing: .01em; }
+.recview .lyrow { align-items: center; }
+.recview .lyrow select { height: 36px; border-radius: 18px; background: #1a1a1e; border: 1px solid var(--line); padding: 0 14px; font-size: 13.5px; color: #e4e4e7; }
+.recview .sq { appearance: none; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: #1a1a1e; color: #e4e4e7; display: grid; place-items: center; padding: 0; }
+.recview .sq svg { width: 17px; height: 17px; }
+.recview .sq:disabled { opacity: .35; }
+.recview .sq.arm { background: #ff5d5d; color: #1a0000; border-color: transparent; }
+.recview .lyview { background: #111114; border: 1px solid #1f1f23; border-radius: 16px; line-height: 1.75; }
+.recview .lyview.empty { display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+.recview .rtools { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+.recview .sw { appearance: none; border: 0; background: none; color: #d4d4d8; display: flex; align-items: center; gap: 9px; font-size: 12.5px; text-align: left; padding: 2px 0; min-height: 32px; }
+.recview .sw i { position: relative; flex: none; width: 34px; height: 20px; border-radius: 10px; background: #3a3a40; transition: background .15s; }
+.recview .sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.recview .sw[aria-checked="true"] i { background: #34c759; }
+.recview .sw[aria-checked="true"] i::after { transform: translateX(14px); }
+.recview .rtools .sw { flex: 1; min-width: 0; white-space: nowrap; }
+.recview .stp { display: flex; align-items: center; background: #1a1a1e; border: 1px solid var(--line); border-radius: 16px; height: 32px; flex: none; font-size: 12px; color: #c9c9cf; font-variant-numeric: tabular-nums; }
+.recview .stp span { padding: 0 2px; min-width: 18px; text-align: center; white-space: nowrap; }
+.recview .stp b { color: #fff; font-weight: 600; }
+.recview .st { appearance: none; border: 0; background: none; color: #fff; width: 30px; height: 30px; font-size: 14px; font-weight: 600; padding: 0; }
+.recview .lane { height: 88px; border-radius: 14px; }
+.recview .rstat { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: #a9a9b0; min-height: 18px; }
+.recview .rstat i { width: 8px; height: 8px; border-radius: 50%; background: #5d5d63; }
+.recview .rstat i.live { background: #ff3d3d; animation: blink 1s ease-in-out infinite; }
+.recview .rstat i.hold { background: #ffd23f; }
+.recview .rstat i.done { background: #34c759; }
+@keyframes blink { 50% { opacity: .25; } }
+.recview .ctl { display: flex; align-items: flex-end; justify-content: space-around; gap: 6px; padding: 2px 0 4px; }
+.recview .cb { appearance: none; border: 0; background: none; color: #e4e4e7; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; min-width: 60px; }
+.recview .cb .cc { display: grid; place-items: center; border-radius: 50%; background: #1f1f24; border: 1px solid #2c2c32; width: 50px; height: 50px; }
+.recview .cb .cc svg { width: 22px; height: 22px; }
+.recview .cb .cl { font-size: 11.5px; color: #a9a9b0; font-weight: 500; }
+.recview .cb.main .cc { width: 78px; height: 78px; border: 0; }
+.recview .cb.main .cc svg { width: 34px; height: 34px; }
+.recview .cb.main .cl { color: #e4e4e7; font-size: 12.5px; }
+.recview .cb.red .cc { background: var(--rec); color: #fff; box-shadow: 0 0 0 6px rgba(255, 61, 61, .16); }
+.recview .cb.amber .cc { background: #ffd23f; color: #1a1400; box-shadow: 0 0 0 6px rgba(255, 210, 63, .14); }
+.recview .cb.light .cc { background: #fff; color: #000; }
+.recview .cb.ok .cc { background: #34c759; color: #04200b; border: 0; }
+.recview .cb.arm .cc { background: #ff5d5d; color: #1a0000; border-color: transparent; }
+.recview .cb.arm .cl { color: #ff8a8a; }
+.recview .cb:active .cc { transform: scale(.94); }
+.recview .hint { margin: 0; text-align: center; font-size: 11.5px; color: #6f6f77; white-space: pre-wrap; }
+@media (prefers-reduced-motion: reduce) { .recview .rstat i.live { animation: none; } }
+
+/* edge-to-edge header: the bar colour runs up under the phone's status bar */
+:root { padding-top: 0; }
+.top { padding-top: max(8px, env(safe-area-inset-top, 0px)); }
+.top h1 { top: calc(50% + env(safe-area-inset-top, 0px) / 2); }
+.panel { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+
+.pill.ic { width: 42px; padding: 0; display: grid; place-items: center; }
+.pill.ic svg { width: 19px; height: 19px; }
+
+/* bottom tool strip: swipe sideways, hold 2 s to rearrange (top row stays fixed) */
+.row2 { position: relative; display: flex; grid-template-columns: none; overflow-x: auto; overflow-y: hidden; margin-top: 0; padding: 6px 0 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.row2::-webkit-scrollbar { display: none; }
+.row2 .tb { flex: 0 0 17.5%; touch-action: pan-x; -webkit-touch-callout: none; }
+.row2.sorting .tb:not(.lift) { opacity: .55; }
+.row2 .tb.lift { position: relative; z-index: 3; opacity: 1; background: #303034; box-shadow: 0 8px 20px rgba(0, 0, 0, .55); }
+
+/* ===== visual polish (layout unchanged) ===== */
+:root { --bg: #06070a; --bar: #14151a; --panel: #15161b; --btn: #262830; --line: #272932; --dim: #8b8b94; }
+.top { background: linear-gradient(180deg, #1b1c22, #121318); border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.top h1 { font-size: 19px; font-weight: 700; letter-spacing: .03em; background: linear-gradient(90deg, #fff 20%, #b7b9ff); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.ib { transition: background .15s, transform .1s; }
+.ib:active { background: rgba(255, 255, 255, .09); transform: scale(.92); }
+.badge { background: linear-gradient(180deg, #ff5a5a, #e92f2f); border-radius: 10px; padding: 7px 11px; font-size: 14px; letter-spacing: .03em; box-shadow: 0 4px 14px rgba(255, 61, 61, .4), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.chip { background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .06); border-radius: 9px; font-weight: 500; }
+.chip.sel { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .55); }
+.toast { background: rgba(34, 35, 42, .92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, .08); border-radius: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.panel { background: linear-gradient(180deg, #1a1b21, #121317); border-top: 1px solid rgba(255, 255, 255, .07); border-radius: 24px 24px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, .5); }
+.tb { border-radius: 14px; transition: background .15s, transform .1s; }
+.tb:active:not(.off) { background: rgba(255, 255, 255, .09); transform: scale(.94); }
+.big { height: 64px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, .08); background: linear-gradient(180deg, #353741, #262830); box-shadow: 0 8px 18px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .07); transition: transform .1s; }
+.big:active { transform: scale(.97); }
+.big.rec { background: linear-gradient(180deg, #ff5959, #e22b2b); border-color: rgba(255, 255, 255, .18); box-shadow: 0 8px 22px rgba(255, 61, 61, .35), inset 0 1px 0 rgba(255, 255, 255, .3); }
+.pill { background: #22242b; border: 1px solid rgba(255, 255, 255, .06); transition: background .15s; }
+.pill[aria-pressed="true"] { background: linear-gradient(180deg, #fff, #d8dbff); border-color: transparent; }
+.scrim { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); background: rgba(0, 0, 0, .5); }
+.sheet { background: linear-gradient(180deg, #202127, #17181d); border-radius: 26px 26px 0 0; border-top: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 -18px 44px rgba(0, 0, 0, .55); }
+.sheet::before { content: ''; flex: none; width: 38px; height: 4px; border-radius: 2px; background: #3b3d46; align-self: center; margin-top: -8px; }
+.sheet h2 { font-size: 17px; font-weight: 700; letter-spacing: .01em; }
+.btn { border-radius: 14px; background: #2a2c35; border: 1px solid rgba(255, 255, 255, .05); transition: transform .1s, background .15s; }
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn.pri { background: linear-gradient(180deg, #ffffff, #dcdef5); border-color: transparent; }
+input[type=range] { accent-color: #c9ccff; }
+.scrim:not([hidden]) .sheet { animation: sheetUp .24s cubic-bezier(.2, .8, .2, 1); }
+@keyframes sheetUp { from { transform: translateY(28px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .scrim:not([hidden]) .sheet { animation: none; } }
+
+/* ---- refined look: graphite surfaces, one warm accent ---- */
+:root { --bg: #0b0c0e; --bar: #0b0c0e; --panel: #0b0c0e; --btn: #16181d; --line: #1d2026; --rec: #FF6B3D; --dim: #8a8f98; }
+.top { border-bottom: 1px solid var(--line); }
+.top h1 { font-size: 16px; font-weight: 600; letter-spacing: .02em; }
+.ib { border-radius: 14px; }
+.ib svg { width: 22px; height: 22px; }
+.badge { background: #FF6B3D; color: #1a0a03; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 11px; top: 6px; }
+.chip { background: #101216e6; border: 1px solid #262a32; border-radius: 13px; font-size: 11.5px; font-weight: 600; }
+.chip.sel { border-color: #fff; }
+.toast { background: #1c1f25; border: 1px solid #2a2e36; border-radius: 14px; }
+.panel { background: #0b0c0e; border-top: 1px solid var(--line); }
+.pill { background: #16181d; border: 1px solid #262a32; color: #c9ccd2; }
+.pill[aria-pressed="true"] { background: #fff; color: #0b0c0e; border-color: #fff; }
+.grp.mid > :nth-child(2) { width: 58px; height: 58px; min-width: 58px; border-radius: 50%; background: #fff; color: #0b0c0e; align-items: center; justify-content: center; padding: 0; }
+.grp.mid > :nth-child(2) svg { width: 26px; height: 26px; }
+.row2 .tb { gap: 7px; font-size: 10.5px; color: #8a8f98; }
+.row2 .tb svg { width: 50px; height: 50px; padding: 13px; box-sizing: border-box; background: #1a1d23; border: 1px solid #262a32; border-radius: 16px; color: #e8e9ec; }
+.row2 .tb.off svg { color: #5d6168; }
+.row2 .tb.lift svg { background: #2a2e36; }
+.row2 .tb.lift { background: none; box-shadow: none; }
+.big { height: 56px; border-radius: 18px; background: #16181d; border: 1px solid #262a32; flex-direction: row; gap: 9px; font-size: 15px; }
+.big svg { width: 22px; height: 22px; }
+.big.rec { background: #FF6B3D; color: #1a0a03; border-color: transparent; font-weight: 700; }
+.big-row { gap: 10px; margin-top: 8px; }
+.sheet { background: #14161a; border-top: 1px solid #262a32; border-radius: 22px 22px 0 0; }
+.sheet h2 { font-size: 17px; }
+.btn { border-radius: 14px; background: #1c1f25; }
+.btn.pri { background: #fff; color: #0b0c0e; }
+.scrim { background: rgba(0, 0, 0, .6); }
 </style>
 
 <div class="app">
@@ -172,9 +361,9 @@ input[type=range] { width: 100%; accent-color: #fff; height: 28px; margin: 0; }
   </main>
   <section class="panel" aria-label="Tools">
     <div class="selbar">
-      <button class="pill" id="bMulti" type="button" aria-pressed="false">Multi Select</button>
-      <button class="pill" id="bAll" type="button">Select All</button>
-      <button class="pill" id="bNone" type="button">Deselect</button>
+      <button class="pill ic" id="bMulti" type="button" aria-pressed="false" aria-label="Multi select" title="Multi select"></button>
+      <button class="pill ic" id="bAll" type="button" aria-label="Select all" title="Select all"></button>
+      <button class="pill ic" id="bNone" type="button" aria-label="Deselect" title="Deselect"></button>
       <span class="selcount" id="selCount"></span>
     </div>
     <div class="row1" id="row1"></div>
@@ -186,8 +375,9 @@ input[type=range] { width: 100%; accent-color: #fff; height: 28px; margin: 0; }
   </section>
 </div>
 <div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="recview" id="recView" hidden></div>
 <div class="busy" id="busy" hidden><div class="spin"></div><span id="busyMsg">Working…</span></div>
-<input type="file" id="pick" class="vh" accept="audio/*,.m4a,.mp3,.wav,.ogg,.aac,.flac,.opus,.amr,.3gp" multiple tabindex="-1">
+<input type="file" id="pick" class="vh" accept="audio/*" multiple tabindex="-1">
 <input type="file" id="capPick" class="vh" accept="audio/*" capture="user" tabindex="-1">
 
 <script>
@@ -303,13 +493,13 @@ function pitchShift(chans, semis) {
 
 const NT = 10;
 const RULER = 62;
-const COLORS = ['#ffffff', '#1fbf9f', '#f6b81e', '#3fcb6c', '#3d92dc', '#f04a6e', '#25b9cb', '#a077e6', '#f58d3f', '#a9d84c'];
+const COLORS = ['#7C8CFF', '#4FD1B5', '#FFB454', '#FF7A8A', '#B392FF', '#5BC0F8', '#9BE564', '#F28CC8', '#FF9F6B', '#C8D957'];
 const MINORS = [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600];
 const MAJORS = [0.5, 1, 2, 5, 10, 15, 20, 30, 60, 120, 300, 600, 1800];
 const HINT = {
-  clip: 'আগে একটি ক্লিপে ট্যাপ করুন',
-  split: 'আগে একটি অডিও ক্লিপ সিলেক্ট করুন এবং প্লে-হেড সেটির ওপর রাখুন',
-  paste: 'আগে একটি ক্লিপ কপি করুন'
+  clip: 'Tap a clip first',
+  split: 'Select an audio clip first and put the playhead on it',
+  paste: 'Copy a clip first'
 };
 const $ = (s, r) => (r || document).querySelector(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -358,12 +548,25 @@ const ICONS = {
   vol: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12"/>',
   speed: '<path d="M4 8h7M15 8h5M11 5v6"/><path d="M4 16h3M11 16h9M7 13v6"/>',
   pitch: '<path d="M4 7h11M4 12h8M4 17h5"/><circle cx="17" cy="17" r="2.3"/><path d="M19.3 17V6l2.7 1.2"/>',
+  denoise: '<path d="M3 12h3l2-6 3 12 3-9 2 3h5"/><path d="M5 20 19 4"/>',
   repl: '<rect x="3" y="5" width="18" height="14" rx="4"/><path d="M8 10h8l-2-2M16 14H8l2 2"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4H6.5A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/>',
   paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><rect x="9" y="2.5" width="6" height="4" rx="1.2" fill="#1c1c1f"/>',
   add: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v9M7.5 12h9"/>',
   mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',
+  spkr: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  spkroff: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+  phones: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3.5" y="13.5" width="4" height="6.5" rx="1.8"/><rect x="16.5" y="13.5" width="4" height="6.5" rx="1.8"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  fullexit: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
+  multisel: '<rect x="3.5" y="7.5" width="13" height="13" rx="3"/><path d="M8 4.5h9.5a3 3 0 0 1 3 3V17"/><path d="m7 14 2.2 2.2L13.5 12"/>',
+  selall: '<path d="M3.5 7l1.6 1.6L8 5.5M3.5 13l1.6 1.6L8 11.5M3.5 19l1.6 1.6L8 17.5"/><path d="M12 7h8.5M12 13h8.5M12 19h8.5"/>',
+  desel: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="m9 9 6 6M15 9l-6 6"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  recdot: '<circle cx="12" cy="12" r="6.5" fill="currentColor"/>',
+  rerec: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   note: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor"/>'
 };
 const ico = (k) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>';
@@ -625,7 +828,7 @@ function updateT() {
   S.t = startT + Math.max(0, ctx.currentTime - startCtx);
 }
 function play() {
-  if (!S.clips.length) { toast('আগে অডিও যোগ করুন'); return; }
+  if (!S.clips.length) { toast('Add audio first'); return; }
   const c = ac();
   if (c.state === 'suspended') c.resume();
   stopNodes();
@@ -739,9 +942,21 @@ function drawClip(c, ph) {
   const sel = isSel(c.id);
   const bx0 = Math.max(x0, -8);
   const bx1 = Math.min(x1, W + 8);
-  g2.fillStyle = sel ? '#3a3a3f' : '#262628';
-  rr(bx0, y, bx1 - bx0, hgt, 5);
+  const tc = tcol(c.track);
+  const cg = g2.createLinearGradient(0, y, 0, y + hgt);
+  cg.addColorStop(0, sel ? '#3b3d48' : '#272932');
+  cg.addColorStop(1, sel ? '#2b2d36' : '#1c1d24');
+  g2.fillStyle = cg;
+  rr(bx0, y, bx1 - bx0, hgt, 8);
   g2.fill();
+  g2.save();
+  g2.globalAlpha = sel ? 0.14 : 0.07;
+  g2.fillStyle = tc;
+  g2.fill();
+  g2.restore();
+  g2.strokeStyle = 'rgba(255,255,255,.07)';
+  g2.lineWidth = 1;
+  g2.stroke();
   const pk = peaksOf(c.buf);
   const mid = y + hgt / 2;
   const maxH = hgt - 8;
@@ -764,10 +979,14 @@ function drawClip(c, ph) {
   }
   g2.stroke();
   if (sel) {
+    g2.save();
+    g2.shadowColor = tc;
+    g2.shadowBlur = 10;
     g2.strokeStyle = '#fff';
     g2.lineWidth = 1.6;
-    rr(bx0 + 0.8, y + 0.8, bx1 - bx0 - 1.6, hgt - 1.6, 5);
+    rr(bx0 + 0.8, y + 0.8, bx1 - bx0 - 1.6, hgt - 1.6, 8);
     g2.stroke();
+    g2.restore();
   }
 }
 function maxScroll() { return Math.max(0, usedCount() * ROW - (Hh - RULER)); }
@@ -783,7 +1002,10 @@ function draw() {
   dirty = false;
   clampScroll();
   g2.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g2.fillStyle = '#000';
+  const bgG = g2.createLinearGradient(0, 0, 0, Hh);
+  bgG.addColorStop(0, '#0a0b0f');
+  bgG.addColorStop(1, '#050608');
+  g2.fillStyle = bgG;
   g2.fillRect(0, 0, W, Hh);
   const ph = W * 0.5;
   drawRuler(ph);
@@ -792,7 +1014,7 @@ function draw() {
   g2.rect(0, RULER, W, Hh - RULER);
   g2.clip();
   g2.translate(0, -S.scrollY);
-  g2.fillStyle = '#101012';
+  g2.fillStyle = '#14161c';
   if (S.clips.length && S.tr < usedCount() && (S.trPick || S.sel)) g2.fillRect(0, RULER + S.tr * ROW, W, ROW);
   for (const c of S.clips) if (!isSel(c.id)) drawClip(c, ph);
   for (const c of S.clips) if (isSel(c.id)) drawClip(c, ph);
@@ -801,12 +1023,22 @@ function draw() {
     g2.fillStyle = '#7a7a82';
     g2.font = '500 14px Inter, "Noto Sans Bengali", system-ui, sans-serif';
     g2.textAlign = 'center';
-    g2.fillText('Select Audio বা Record Audio চাপুন', W / 2, RULER + 70);
+    g2.fillText('Tap Select Audio or Record Audio', W / 2, RULER + 70);
     g2.fillStyle = '#5c5c63';
-    g2.fillText('যতগুলো অডিও যোগ করবেন, ততগুলো ট্র্যাক দেখা যাবে', W / 2, RULER + 96);
+    g2.fillText('One track appears for each audio you add', W / 2, RULER + 96);
   }
-  g2.fillStyle = '#fff';
+  const pg = g2.createLinearGradient(0, 30, 0, Hh);
+  pg.addColorStop(0, '#FF6B3D');
+  pg.addColorStop(1, 'rgba(255,107,61,.5)');
+  g2.save();
+  g2.shadowColor = 'rgba(255,107,61,.55)';
+  g2.shadowBlur = 8;
+  g2.fillStyle = pg;
   g2.fillRect(ph - 1, 30, 2, Hh - 30);
+  g2.beginPath();
+  g2.arc(ph, 30, 4, 0, Math.PI * 2);
+  g2.fill();
+  g2.restore();
   badge.textContent = fmt(S.t);
   labelsEl.style.transform = 'translate(' + (-S.t * S.pps).toFixed(1) + 'px,' + (-S.scrollY).toFixed(1) + 'px)';
 }
@@ -980,7 +1212,7 @@ function endPointer(e) {
     S.clips = S.clips.filter((c) => !dragged.has(c.id)).concat(cs);
     S.tr = selClip() ? selClip().track : S.tr;
     changed();
-    if (into) toast('অডিও পাশের অডিওর লেয়ারের ভিতরে ঢুকেছে');
+    if (into) toast('Clip now overlaps the neighboring clip');
     return;
   }
   if (e.type === 'pointercancel') return;
@@ -1044,7 +1276,7 @@ function moveSelToRow(row, x) {
   let ds = t - p.start;
   const minStart = Math.min.apply(null, cs.map((c) => c.start));
   if (minStart + ds < 0) ds = -minStart;
-  if (d === 0 && Math.abs(ds) < 0.001) { toast('অডিও আগে থেকেই এখানে আছে'); changed(); return; }
+  if (d === 0 && Math.abs(ds) < 0.001) { toast('Clip is already here'); changed(); return; }
   pushUndo();
   cs.forEach((c) => { c.track += d; c.start += ds; });
   const ids = new Set(cs.map((c) => c.id));
@@ -1054,7 +1286,7 @@ function moveSelToRow(row, x) {
   S.trPick = true;
   revealTrack(S.tr);
   changed();
-  toast(into ? 'অডিও অন্য অডিওর লেয়ারের ভিতরে ঢুকেছে' : 'অডিও এখানে সরানো হয়েছে');
+  toast(into ? 'Clip now overlaps another clip' : 'Clip moved here');
 }
 function tap(x, y) {
   if (y < RULER) return;
@@ -1150,7 +1382,9 @@ async function busy(msg, fn) {
 }
 
 // ---------- sheets ----------
+let sheetCleanup = null;
 function closeSheet() {
+  if (sheetCleanup) { const fn = sheetCleanup; sheetCleanup = null; try { fn(); } catch (e) { /* ignore */ } }
   $('#scrim').hidden = true;
   $('#sheet').replaceChildren();
 }
@@ -1173,12 +1407,28 @@ function slider(o) {
     out.textContent = o.fmt(+inp.value);
     if (o.onInput) o.onInput(+inp.value);
   });
+  if (o.reset != null) {
+    let dn = null; let lastUp = 0;
+    inp.addEventListener('pointerdown', (e) => { dn = { x: e.clientX, y: e.clientY }; });
+    inp.addEventListener('pointerup', (e) => {
+      if (!dn) return;
+      const moved = Math.abs(e.clientX - dn.x) > 12 || Math.abs(e.clientY - dn.y) > 12;
+      dn = null;
+      if (moved) { lastUp = 0; return; }
+      const now = performance.now();
+      if (lastUp && now - lastUp < 420) {
+        lastUp = 0;
+        inp.value = o.reset;
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+      } else lastUp = now;
+    });
+  }
   return { el: h('label', { class: 'sl', for: o.id }, h('span', { class: 'sl-h' }, h('span', {}, o.label), out), inp), inp, out };
 }
 
 function sheetVolume() {
   const c = selClip();
-  const s = slider({ id: 'volRange', label: 'Volume', min: 0, max: 300, step: 1, value: Math.round(c.gain * 100), fmt: (x) => x + '%' });
+  const s = slider({ id: 'volRange', label: 'Volume (double-tap to reset to 100%)', min: 0, max: 300, step: 1, value: Math.round(c.gain * 100), fmt: (x) => x + '%', reset: 100 });
   openSheet('Volume', s.el, () => { pushUndo(); c.gain = +s.inp.value / 100; changed(); });
 }
 function sheetSpeed() {
@@ -1216,6 +1466,230 @@ function sheetPitch() {
     });
   });
 }
+// ---------- noise removal: linked-channel spectral Wiener gate (decision-directed, gain floor, smoothed) ----------
+const DN = 2048;
+const DH = 512;
+const DWIN = (() => {
+  const w = new Float32Array(DN);
+  for (let i = 0; i < DN; i++) w[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / DN);
+  return w;
+})();
+const FFT = (() => {
+  const n = DN;
+  const lv = Math.log2(n);
+  const rev = new Uint16Array(n);
+  for (let i = 0; i < n; i++) {
+    let r = 0;
+    for (let b = 0; b < lv; b++) if (i & (1 << b)) r |= 1 << (lv - 1 - b);
+    rev[i] = r;
+  }
+  const cs = new Float32Array(n / 2);
+  const sn = new Float32Array(n / 2);
+  for (let i = 0; i < n / 2; i++) {
+    cs[i] = Math.cos((2 * Math.PI * i) / n);
+    sn[i] = Math.sin((2 * Math.PI * i) / n);
+  }
+  return function (re, im, inv) {
+    for (let i = 0; i < n; i++) {
+      const j = rev[i];
+      if (j > i) {
+        let t = re[i]; re[i] = re[j]; re[j] = t;
+        t = im[i]; im[i] = im[j]; im[j] = t;
+      }
+    }
+    for (let size = 2; size <= n; size <<= 1) {
+      const half = size >> 1;
+      const step = n / size;
+      for (let i = 0; i < n; i += size) {
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const wr = cs[k];
+          const wi = inv ? sn[k] : -sn[k];
+          const a = i + j;
+          const b = a + half;
+          const tr = re[b] * wr - im[b] * wi;
+          const ti = re[b] * wi + im[b] * wr;
+          re[b] = re[a] - tr;
+          im[b] = im[a] - ti;
+          re[a] += tr;
+          im[a] += ti;
+        }
+      }
+    }
+  };
+})();
+// Per-frequency noise level, taken from the quietest 20% of frames. Returns null when the clip is too short.
+function noiseProfile(chans) {
+  const len = chans[0].length;
+  const B = DN / 2 + 1;
+  if (len < DN * 8) return null;
+  const hop = Math.max(DN, Math.floor((len - DN) / 3000));
+  const nfr = Math.floor((len - DN) / hop) + 1;
+  const pw = new Float32Array(nfr * B);
+  const re = new Float32Array(DN);
+  const im = new Float32Array(DN);
+  for (let f = 0; f < nfr; f++) {
+    const pos = f * hop;
+    for (let ch = 0; ch < chans.length; ch++) {
+      const src = chans[ch];
+      for (let i = 0; i < DN; i++) { re[i] = src[pos + i] * DWIN[i]; im[i] = 0; }
+      FFT(re, im, false);
+      for (let k = 0; k < B; k++) pw[f * B + k] += (re[k] * re[k] + im[k] * im[k]) / chans.length;
+    }
+  }
+  const raw = new Float32Array(B);
+  const col = new Float32Array(nfr);
+  const q = Math.floor(nfr * 0.2);
+  for (let k = 0; k < B; k++) {
+    for (let f = 0; f < nfr; f++) col[f] = pw[f * B + k];
+    col.sort();
+    raw[k] = col[q] * 3;
+  }
+  const out = new Float32Array(B);
+  for (let k = 0; k < B; k++) {
+    let a = 0;
+    let n = 0;
+    for (let d = -4; d <= 4; d++) {
+      const kk = k + d;
+      if (kk >= 0 && kk < B) { a += raw[kk]; n++; }
+    }
+    out[k] = a / n;
+  }
+  return out;
+}
+// strength 0..1. The gain never drops below a floor (6 to 24 dB down), rises instantly and falls slowly,
+// so speech onsets stay intact and nothing flutters or sounds robotic.
+async function denoise(chans, prof, strength, onProgress) {
+  const nch = chans.length;
+  const len = chans[0].length;
+  const B = DN / 2 + 1;
+  const pad = DN;
+  const total = len + 2 * pad;
+  const frames = Math.floor((total - DN) / DH) + 1;
+  const out = chans.map(() => new Float32Array(total));
+  const re = chans.map(() => new Float32Array(DN));
+  const im = chans.map(() => new Float32Array(DN));
+  const G = new Float32Array(B);
+  const Gs = new Float32Array(B).fill(1);
+  const prevP = new Float32Array(B);
+  const beta = 1 + 0.8 * strength;
+  const gmin = Math.pow(10, -(6 + 18 * strength) / 20);
+  for (let f = 0; f < frames; f++) {
+    const pos = f * DH;
+    for (let ch = 0; ch < nch; ch++) {
+      const src = chans[ch];
+      const r = re[ch];
+      const m = im[ch];
+      for (let i = 0; i < DN; i++) {
+        const idx = pos + i - pad;
+        r[i] = idx >= 0 && idx < len ? src[idx] * DWIN[i] : 0;
+        m[i] = 0;
+      }
+      FFT(r, m, false);
+    }
+    const P = new Float32Array(B);
+    for (let k = 0; k < B; k++) {
+      let p = 0;
+      for (let ch = 0; ch < nch; ch++) p += re[ch][k] * re[ch][k] + im[ch][k] * im[ch][k];
+      p /= nch;
+      P[k] = p;
+      const nn = prof[k] * beta + 1e-12;
+      const post = p / nn;
+      const xi = 0.97 * (prevP[k] / nn) + 0.03 * Math.max(post - 1, 0);
+      const g = xi / (1 + xi);
+      G[k] = g < gmin ? gmin : g;
+    }
+    for (let k = 0; k < B; k++) {
+      const a = G[k > 0 ? k - 1 : 0];
+      const b = G[k < B - 1 ? k + 1 : B - 1];
+      const sm = (a + 2 * G[k] + b) / 4;
+      const held = Gs[k] * 0.8;
+      const gf = sm > held ? sm : held;
+      Gs[k] = gf;
+      prevP[k] = gf * gf * P[k];
+      for (let ch = 0; ch < nch; ch++) {
+        re[ch][k] *= gf;
+        im[ch][k] *= gf;
+        if (k > 0 && k < DN / 2) {
+          re[ch][DN - k] *= gf;
+          im[ch][DN - k] *= gf;
+        }
+      }
+    }
+    for (let ch = 0; ch < nch; ch++) {
+      FFT(re[ch], im[ch], true);
+      const o = out[ch];
+      const r = re[ch];
+      for (let i = 0; i < DN; i++) o[pos + i] += (r[i] / DN) * DWIN[i] / 1.5;
+    }
+    if (f % 300 === 299) {
+      if (onProgress) onProgress(f / frames);
+      await new Promise((res) => setTimeout(res, 0));
+    }
+  }
+  return out.map((o) => o.slice(pad, pad + len));
+}
+// ---------- end noise removal ----------
+function sheetDenoise() {
+  const c = selClip();
+  if (!c) return;
+  const s = slider({ id: 'dnRange', label: 'Noise Removal Strength', min: 10, max: 100, step: 5, value: 50, fmt: (x) => x + '%' });
+  let prof = null;
+  let prevSrc = null;
+  const stopPrev = () => {
+    if (prevSrc) {
+      try { prevSrc.stop(); } catch (e) { /* ignore */ }
+      try { prevSrc.disconnect(); } catch (e) { /* ignore */ }
+      prevSrc = null;
+    }
+  };
+  sheetCleanup = stopPrev;
+  const getProf = () => prof || (prof = noiseProfile(regionChans(c)));
+  const preview = async (cleaned) => {
+    pause();
+    stopPrev();
+    const a = Math.round(clamp(S.t - c.start, 0, Math.max(0, c.dur - 0.5)) * c.buf.sampleRate);
+    const full = regionChans(c);
+    const b = Math.min(full[0].length, a + Math.round(6 * c.buf.sampleRate));
+    let chans = full.map((d) => d.subarray(a, b));
+    if (cleaned) {
+      let out = null;
+      await busy('Preparing preview…', async () => {
+        const pr = getProf();
+        if (!pr) return;
+        out = await denoise(chans, pr, +s.inp.value / 100, null);
+      });
+      if (!out) { toast('Clip is too short for noise removal'); return; }
+      chans = out;
+    }
+    const cx = ac();
+    if (cx.state === 'suspended') cx.resume();
+    const src = cx.createBufferSource();
+    src.buffer = makeBuf(chans.map((d) => Float32Array.from(d)), c.buf.sampleRate);
+    const gn = cx.createGain();
+    gn.gain.value = c.gain;
+    src.connect(gn);
+    gn.connect(cx.destination);
+    src.start();
+    prevSrc = src;
+  };
+  const mini = h('div', { class: 'mini' },
+    h('button', { class: 'btn', type: 'button', onclick: () => preview(false) }, 'Play: Original'),
+    h('button', { class: 'btn', type: 'button', onclick: () => preview(true) }, 'Play: Cleaned'));
+  const note = h('p', { class: 'note' }, 'Removes only background noise (fan, hiss, hum) and keeps the voice natural. Listen to 6 seconds from the playhead, start low and increase. Works best when the clip has a few quiet moments.');
+  openSheet('Noise Remove', [s.el, mini, note], async () => {
+    const st = +s.inp.value / 100;
+    await busy('Removing noise…', async () => {
+      const chans = regionChans(c);
+      const pr = getProf();
+      if (!pr) { toast('Clip is too short for noise removal'); return; }
+      const out = await denoise(chans, pr, st, (p) => { $('#busyMsg').textContent = 'Removing noise… ' + Math.round(p * 100) + '%'; });
+      const nb = makeBuf(out, c.buf.sampleRate);
+      pushUndo();
+      setClipBuf(c, nb);
+      changed();
+    });
+  }, 'Remove Noise');
+}
 function sheetTrim() {
   const c = selClip();
   const maxCut = Math.max(0, c.dur - 0.1);
@@ -1252,7 +1726,7 @@ function sheetTrim() {
 function sheetEdit() {
   const c = selClip();
   const mx = Math.max(0.05, c.dur / 2);
-  const v = slider({ id: 'volRange', label: 'Volume', min: 0, max: 300, step: 1, value: Math.round(c.gain * 100), fmt: (x) => x + '%' });
+  const v = slider({ id: 'volRange', label: 'Volume (double-tap to reset to 100%)', min: 0, max: 300, step: 1, value: Math.round(c.gain * 100), fmt: (x) => x + '%', reset: 100 });
   const f1 = slider({ id: 'fadeIn', label: 'Fade in', min: 0, max: mx, step: 0.05, value: Math.min(c.fi || 0, mx), fmt: (x) => x.toFixed(2) + ' s' });
   const f2 = slider({ id: 'fadeOut', label: 'Fade out', min: 0, max: mx, step: 0.05, value: Math.min(c.fo || 0, mx), fmt: (x) => x.toFixed(2) + ' s' });
   const mini = h('div', { class: 'mini' },
@@ -1272,7 +1746,7 @@ function sheetEdit() {
       closeSheet();
       let pk = 0;
       for (const d of regionChans(c)) for (let i = 0; i < d.length; i++) { const v = d[i] < 0 ? -d[i] : d[i]; if (v > pk) pk = v; }
-      if (pk < 1e-4) { toast('এই ক্লিপে শব্দ নেই'); return; }
+      if (pk < 1e-4) { toast('This clip has no sound'); return; }
       pushUndo();
       c.gain = Math.min(8, 0.98 / pk);
       changed();
@@ -1289,23 +1763,102 @@ function sheetEdit() {
 function sheetTracks() {
   let pushed = false;
   const touch = () => { if (!pushed) { pushUndo(true); pushed = true; } };
-  const list = h('div', { class: 'stack' });
-  S.tracks.forEach((tr, i) => {
-    if (i >= usedCount()) return;
+  const used = [];
+  for (let i = 0; i < S.tracks.length && i < usedCount(); i++) used.push(i);
+  const syncers = [];
+  const allBtn = h('button', { class: 'mx-all', type: 'button' });
+  const allMuted = () => used.length > 0 && used.every((i) => S.tracks[i].mute);
+  const syncAll = () => {
+    const am = allMuted();
+    allBtn.innerHTML = ico(am ? 'spkroff' : 'spkr');
+    allBtn.setAttribute('aria-label', am ? 'Unmute all tracks' : 'Mute all tracks');
+    allBtn.setAttribute('title', am ? 'Unmute all' : 'Mute all');
+    allBtn.classList.toggle('on', am);
+    syncers.forEach((f) => f());
+  };
+  allBtn.addEventListener('click', () => {
+    touch();
+    const mute = !allMuted();
+    used.forEach((i) => {
+      S.tracks[i].mute = mute;
+      if (!mute) S.tracks[i].solo = false;
+    });
+    applyTrackGains();
+    refreshLabels();
+    syncAll();
+  });
+  const mixer = h('div', { class: 'mixer' });
+  used.forEach((i) => {
+    const tr = S.tracks[i];
+    const strip = h('div', { class: 'strip' });
     const name = h('input', { type: 'text', id: 'tn' + i, maxlength: 14, value: tr.name, 'aria-label': 'Track ' + (i + 1) + ' name' });
     name.addEventListener('input', () => { touch(); tr.name = name.value; refreshLabels(); });
-    const m = h('button', { class: 'tgl m', type: 'button', 'aria-pressed': String(tr.mute), 'aria-label': 'Mute' }, 'M');
-    const s = h('button', { class: 'tgl s', type: 'button', 'aria-pressed': String(tr.solo), 'aria-label': 'Solo' }, 'S');
-    m.addEventListener('click', () => { touch(); tr.mute = !tr.mute; m.setAttribute('aria-pressed', String(tr.mute)); applyTrackGains(); refreshLabels(); });
-    s.addEventListener('click', () => { touch(); tr.solo = !tr.solo; s.setAttribute('aria-pressed', String(tr.solo)); applyTrackGains(); });
-    const vol = h('input', { type: 'range', id: 'tv' + i, min: 0, max: 150, step: 1, value: Math.round(tr.vol * 100), 'aria-label': 'Track ' + (i + 1) + ' volume' });
-    vol.addEventListener('input', () => { touch(); tr.vol = +vol.value / 100; applyTrackGains(); });
-    const dot = h('span', { class: 'dot' });
-    dot.style.background = tcol(i);
-    list.append(h('div', { class: 'trk' }, dot, name, m, s, vol));
+    const m = h('button', { class: 'tgl m', type: 'button', 'aria-label': 'Mute', title: 'Mute' });
+    m.innerHTML = ico('spkroff');
+    const sb = h('button', { class: 'tgl s', type: 'button', 'aria-label': 'Solo', title: 'Solo' });
+    sb.innerHTML = ico('phones');
+    const num = h('div', { class: 'mx-num' }, h('i', {}), h('span', {}, String(i + 1)));
+    num.firstChild.style.background = tcol(i);
+    m.addEventListener('click', () => { touch(); tr.mute = !tr.mute; applyTrackGains(); refreshLabels(); syncAll(); });
+    sb.addEventListener('click', () => { touch(); tr.solo = !tr.solo; applyTrackGains(); syncAll(); });
+    const fill = h('div', { class: 'fill' });
+    fill.style.background = tcol(i);
+    const mark = h('div', { class: 'mark' });
+    mark.style.bottom = (100 / 150) * 100 + '%';
+    const fader = h('div', { class: 'fader', role: 'slider', tabindex: '0', 'aria-label': 'Track ' + (i + 1) + ' volume', 'aria-valuemin': '0', 'aria-valuemax': '150' }, fill, mark);
+    const pct = h('button', { class: 'pct', type: 'button', 'aria-label': 'Reset volume to 100%' });
+    const show = () => {
+      const v = Math.round(tr.vol * 100);
+      fill.style.height = (v / 150) * 100 + '%';
+      pct.textContent = v + '%';
+      fader.setAttribute('aria-valuenow', String(v));
+    };
+    const setVol = (v) => {
+      touch();
+      tr.vol = clamp(Math.round(v), 0, 150) / 100;
+      applyTrackGains();
+      show();
+    };
+    const fromEvent = (e) => {
+      const r = fader.getBoundingClientRect();
+      setVol((1 - (e.clientY - r.top) / r.height) * 150);
+    };
+    let lastDown = 0;
+    fader.addEventListener('pointerdown', (e) => {
+      const now = performance.now();
+      if (lastDown && now - lastDown < 380) { lastDown = 0; setVol(100); return; }
+      lastDown = now;
+      try { fader.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+      fromEvent(e);
+    });
+    fader.addEventListener('pointermove', (e) => {
+      if (fader.hasPointerCapture && fader.hasPointerCapture(e.pointerId)) fromEvent(e);
+    });
+    fader.addEventListener('keydown', (e) => {
+      const cur = Math.round(tr.vol * 100);
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); setVol(cur + 5); }
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); setVol(cur - 5); }
+    });
+    pct.addEventListener('click', () => setVol(100));
+    syncers.push(() => {
+      m.setAttribute('aria-pressed', String(tr.mute));
+      sb.setAttribute('aria-pressed', String(tr.solo));
+      strip.classList.toggle('dim', tr.mute);
+    });
+    show();
+    strip.append(num, name, h('div', { class: 'mx-btns' }, m, sb), fader, pct);
+    mixer.append(strip);
   });
-  if (!S.clips.length) list.append(h('p', { class: 'note' }, 'এখনো কোনো ট্র্যাক নেই। আগে অডিও যোগ করুন।'));
-  openSheet('Edit Tracks', list, null);
+  syncAll();
+  if (!S.clips.length) {
+    openSheet('Edit Tracks', h('p', { class: 'note' }, 'No tracks yet. Add audio first.'), null);
+    return;
+  }
+  openSheet('Edit Tracks', [
+    h('div', { class: 'mx-head' }, h('span', {}, 'Mixer · ' + used.length + (used.length === 1 ? ' track' : ' tracks')), allBtn),
+    mixer,
+    h('p', { class: 'note mx-note' }, 'Drag a fader to set the level. The line marks 100%; double-tap a fader to reset it.')
+  ], null);
 }
 
 // ---------- editing actions ----------
@@ -1338,7 +1891,7 @@ function moveHere() {
   S.clips = S.clips.filter((c) => !ids.has(c.id)).concat(cs);
   if (selClip()) S.tr = selClip().track;
   changed();
-  if (into) toast('অডিও অন্য অডিওর লেয়ারের ভিতরে ঢুকেছে');
+  if (into) toast('Clip now overlaps another clip');
 }
 function splitTarget() {
   const t = S.t;
@@ -1371,7 +1924,7 @@ function doDelete() {
 }
 function doCopy() {
   S.cb = Object.assign({}, selClip());
-  toast('কপি হয়েছে');
+  toast('Copied');
   changed();
 }
 function fitOnTrack(ti, t, dur) {
@@ -1401,7 +1954,7 @@ function doPaste() {
     st = fit;
   } else {
     tr = newTrackIndex(S.t, src.dur, S.tr);
-    if (target != null && target < usedCount()) toast('এই জায়গায় অডিওর জন্য খালি জায়গা নেই, তাই নতুন ট্র্যাকে বসেছে');
+    if (target != null && target < usedCount()) toast('No free space here, so the clip was placed on a new track');
   }
   const c = Object.assign({}, src, { id: nextId++, start: st, track: tr });
   S.clips.push(c);
@@ -1433,21 +1986,41 @@ async function importFiles(files, mode) {
         got.push({ name: f.name, buf: await decode(ab) });
       } catch (e) { failed++; }
     }
-    if (!got.length) { toast('এই ফাইল পড়া যায়নি। MP3, M4A বা WAV দিয়ে চেষ্টা করুন।'); return; }
+    if (!got.length) { toast('Could not read this file. Try MP3, M4A or WAV.'); return; }
     const target = mode === 'replace' ? S.clips.find((c) => c.id === replaceId) : null;
-    if (mode === 'replace' && !target) { toast('রিপ্লেস করার ক্লিপ পাওয়া যায়নি, আবার সিলেক্ট করুন'); return; }
+    if (mode === 'replace' && !target) { toast('Clip to replace not found, select it again'); return; }
     pushUndo();
     if (target) {
       setClipBuf(target, got[0].buf);
       target.name = got[0].name;
-      if (settleClips([target]) === 'moved') toast('ওভারল্যাপ হওয়ায় ক্লিপ অন্য ট্র্যাকে সরানো হয়েছে');
-      else toast('অডিও রিপ্লেস হয়েছে');
+      if (settleClips([target]) === 'moved') toast('Clip moved to another track to avoid overlap');
+      else toast('Audio replaced');
     } else {
-      for (const it of got) placeBuf(it.buf, it.name, S.t, S.tr);
+      if (got.length === 1) {
+        placeBuf(got[0].buf, got[0].name, S.t, S.tr);
+      } else {
+        // several files: lay them one after another on the first track that has room
+        const total = got.reduce((m, it) => m + it.buf.duration, 0);
+        const tr = freeTrack(S.t, total, null);
+        ensureTracks(tr + 1);
+        let at = S.t;
+        const ids = [];
+        for (const it of got) {
+          const c = { id: nextId++, track: tr, start: at, buf: it.buf, off: 0, dur: it.buf.duration, gain: 1, fi: 0, fo: 0, name: it.name };
+          S.clips.push(c);
+          ids.push(c.id);
+          at += it.buf.duration;
+        }
+        setSel(ids);
+        S.tr = tr;
+        S.trPick = true;
+        revealTrack(tr);
+        toast(got.length + ' audios placed one after another on track ' + (tr + 1));
+      }
     }
     refreshLabels();
     changed();
-    if (failed) toast(failed + 'টি ফাইল পড়া যায়নি');
+    if (failed) toast(failed + ' file(s) could not be read');
   });
 }
 function newTrackIndex(start, dur, prefer) {
@@ -1479,7 +2052,7 @@ let rec = null;
 let recTick = 0;
 let micDenied = false;
 let lyrics = [];
-const lyView = { id: null, size: 22, delArm: false, guide: false };
+const lyView = { id: null, size: 22, delArm: false, guide: false, speed: 3, scroll: true };
 const newLyId = () => 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const getLy = (id) => lyrics.find((l) => l.id === id) || null;
 function micPossible() {
@@ -1504,38 +2077,28 @@ async function saveLyrics() {
     return true;
   } catch (e) { return false; }
 }
+const R = { st: 'idle', take: null, peaks: [], lyPos: 0, userUntil: 0, raf: 0, last: 0, cv: null, src: null, pStart: 0, pOff: 0, playing: false, delArm: false, closeArm: false, starting: false };
+const recView = $('#recView');
+const fmtT = (x) => { x = Math.max(0, x); const m = Math.floor(x / 60); return m + ':' + pad(Math.floor(x % 60), 2) + '.' + Math.floor((x * 10) % 10); };
+function elapsedOf(r) { return r.acc + (r.seg ? (performance.now() - r.seg) / 1000 : 0); }
 function recLabel() {
-  const s = rec ? Math.floor((performance.now() - rec.t0) / 1000) : 0;
-  return 'Stop · ' + Math.floor(s / 60) + ':' + pad(s % 60, 2);
+  if (!rec) return 'Record Audio';
+  const s = Math.floor(elapsedOf(rec));
+  return (R.st === 'paused' ? 'Paused · ' : 'Recording · ') + Math.floor(s / 60) + ':' + pad(s % 60, 2);
 }
-function sizeBar() {
-  const set = (d) => {
-    lyView.size = clamp(lyView.size + d, 14, 44);
-    const el = $('#lyView');
-    if (el) el.style.fontSize = lyView.size + 'px';
-  };
-  return h('div', { class: 'mini' },
-    h('button', { class: 'btn', type: 'button', onclick: () => set(-2) }, 'A−  ছোট'),
-    h('button', { class: 'btn', type: 'button', onclick: () => set(2) }, 'A+  বড়'));
-}
-function lyBox(cur, tall, msg) {
-  const box = h('div', { class: 'lyview' + (cur ? '' : ' empty'), id: 'lyView' }, cur ? (cur.text || '(এই লিরিক্স খালি)') : msg);
-  if (cur) box.style.fontSize = lyView.size + 'px';
-  if (tall) box.style.maxHeight = '52vh';
-  return box;
-}
+
 function renderLyEdit(cur) {
-  const title = h('input', { type: 'text', id: 'lyTitle', maxlength: 60, placeholder: 'গানের নাম / শিরোনাম', value: cur ? cur.title : '', 'aria-label': 'শিরোনাম' });
-  const text = h('textarea', { id: 'lyText', placeholder: 'এখানে লিরিক্স লিখুন…', 'aria-label': 'লিরিক্স' });
+  const title = h('input', { type: 'text', id: 'lyTitle', maxlength: 60, placeholder: 'Song name / title', value: cur ? cur.title : '', 'aria-label': 'Title' });
+  const text = h('textarea', { id: 'lyText', placeholder: 'Write lyrics here…', 'aria-label': 'Lyrics' });
   text.value = cur ? cur.text : '';
   $('#sheet').replaceChildren(
-    h('h2', {}, cur ? 'লিরিক্স এডিট' : 'নতুন লিরিক্স'),
+    h('h2', {}, cur ? 'Edit Lyrics' : 'New Lyrics'),
     title,
     text,
     h('div', { class: 'btns' },
-      h('button', { class: 'btn', type: 'button', onclick: renderRec }, 'Cancel'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { closeSheet(); renderRec(); } }, 'Cancel'),
       h('button', { class: 'btn pri', type: 'button', onclick: async () => {
-        const t = title.value.trim() || 'নামহীন লিরিক্স';
+        const t = title.value.trim() || 'Untitled lyrics';
         if (cur) {
           cur.title = t;
           cur.text = text.value;
@@ -1544,132 +2107,445 @@ function renderLyEdit(cur) {
           const n = { id: newLyId(), title: t, text: text.value, t: Date.now() };
           lyrics.push(n);
           lyView.id = n.id;
+          R.lyPos = 0;
         }
         const ok = await saveLyrics();
+        closeSheet();
         renderRec();
-        if (!ok) toast('লিরিক্স সেভ করা যায়নি');
+        if (!ok) toast('Could not save lyrics');
       } }, 'Save')));
+  $('#scrim').hidden = false;
   setTimeout(() => { try { (cur ? text : title).focus(); } catch (e) { /* ignore */ } }, 50);
 }
-function renderRecording() {
-  const cur = getLy(lyView.id);
-  const stop = h('button', { class: 'btn rec', type: 'button', id: 'recStop', onclick: () => { if (rec) rec.mr.stop(); } }, recLabel());
-  $('#sheet').replaceChildren(
-    h('h2', {}, cur ? cur.title : 'রেকর্ড হচ্ছে'),
-    lyBox(cur, true, 'কোনো লিরিক্স বেছে নেওয়া হয়নি।'),
-    sizeBar(),
-    stop);
-}
-function renderRec() {
-  if (rec) { renderRecording(); return; }
-  lyView.delArm = false;
-  if (lyView.id && !getLy(lyView.id)) lyView.id = null;
-  const cur = getLy(lyView.id);
-  const sel = h('select', { id: 'lySel', 'aria-label': 'লিরিক্স বেছে নিন' },
-    h('option', { value: '' }, lyrics.length ? 'লিরিক্স ছাড়া / বেছে নিন' : 'কোনো লিরিক্স নেই'));
-  lyrics.forEach((l) => sel.append(h('option', { value: l.id }, l.title || 'নামহীন')));
-  sel.value = lyView.id || '';
-  sel.addEventListener('change', () => { lyView.id = sel.value || null; renderRec(); });
-  const del = h('button', { class: 'btn warn', type: 'button', disabled: !cur, onclick: async () => {
-    if (!cur) return;
-    if (!lyView.delArm) { lyView.delArm = true; del.textContent = 'নিশ্চিত? আবার চাপুন'; return; }
-    lyrics = lyrics.filter((l) => l.id !== cur.id);
-    lyView.id = null;
-    await saveLyrics();
-    renderRec();
-  } }, 'ডিলিট');
-  const mini = h('div', { class: 'mini' },
-    h('button', { class: 'btn', type: 'button', onclick: () => renderLyEdit(null) }, 'নতুন লিরিক্স'),
-    h('button', { class: 'btn', type: 'button', disabled: !cur, onclick: () => { if (cur) renderLyEdit(cur); } }, 'এডিট'),
-    del);
-  const nodes = [
-    h('h2', {}, 'Record Audio'),
-    sel,
-    lyBox(cur, false, lyrics.length ? 'উপরে থেকে একটি লিরিক্স বেছে নিন, অথবা নতুন লিরিক্স যোগ করুন।' : 'এখনো কোনো লিরিক্স নেই। "নতুন লিরিক্স" চেপে লিখে সেভ করুন, তারপর দেখে দেখে রেকর্ড করুন।'),
-    cur ? sizeBar() : null,
-    mini
-  ];
-  if (micPossible()) {
-    if (S.clips.length) {
-      const cb = h('input', { type: 'checkbox', id: 'recGuide' });
-      cb.checked = !!lyView.guide;
-      cb.addEventListener('change', () => { lyView.guide = cb.checked; });
-      nodes.push(h('label', { class: 'chk', for: 'recGuide' }, cb, 'রেকর্ডের সময় আগের ট্র্যাক বাজবে (হেডফোন লাগান)'));
+
+// ----- lane (audio track under the lyrics) -----
+function drawLane() {
+  const cv = R.cv;
+  if (!cv || !cv.isConnected) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#17171a';
+  g.fillRect(0, 0, W, H);
+  const mid = H / 2;
+  g.fillStyle = '#2c2c30';
+  g.fillRect(0, mid, W, 1);
+  const step = 4;
+  g.font = '600 12px Inter, system-ui, sans-serif';
+  g.textBaseline = 'top';
+  if (R.st === 'rec' || R.st === 'paused') {
+    const n = R.peaks.length;
+    const cap = Math.floor((W - 8) / step);
+    g.fillStyle = R.st === 'rec' ? '#ff5d5d' : '#a05a5a';
+    for (let i = Math.max(0, n - cap); i < n; i++) {
+      const x = W - 8 - (n - i) * step;
+      const a = Math.min(1, Math.sqrt(R.peaks[i]) * 1.2) * (H * 0.42);
+      g.fillRect(x, mid - Math.max(1, a), 2.5, Math.max(2, a * 2));
     }
-    nodes.push(h('p', { class: 'note' }, 'নয়েজ ফিল্টার ও অটো-ভলিউম বন্ধ রেখে হাই-কোয়ালিটিতে অরিজিনাল সাউন্ড রেকর্ড হবে। ফোন মুখের কাছে রাখুন।'));
-    nodes.push(h('button', { class: 'btn rec', type: 'button', onclick: startRec }, 'রেকর্ড শুরু করুন'));
+    g.fillStyle = '#fff';
+    g.fillRect(W - 5, 0, 2, H);
+    g.fillStyle = '#d4d4d8';
+    g.textAlign = 'left';
+    g.fillText('Audio track · ' + fmtT(rec ? elapsedOf(rec) : 0), 10, 6);
+  } else if (R.st === 'review' && R.take) {
+    const buf = R.take.buf, dur = buf.duration;
+    const pk = peaksOf(buf);
+    const cols = Math.max(1, Math.floor((W - 8) / step));
+    const pos = R.playing && ctx ? clamp(ctx.currentTime - R.pStart, 0, dur) : R.pOff;
+    const pc = pos / dur * cols;
+    for (let i = 0; i < cols; i++) {
+      const m = maxPeak(pk, i / cols * dur, (i + 1) / cols * dur);
+      const a = Math.min(1, Math.sqrt(m) * 1.2) * (H * 0.42);
+      g.fillStyle = i < pc ? '#ffffff' : '#6b6b73';
+      g.fillRect(4 + i * step, mid - Math.max(1, a), 2.5, Math.max(2, a * 2));
+    }
+    g.fillStyle = tcol(S.tr);
+    g.fillRect(4 + pc * step, 0, 2, H);
+    g.fillStyle = '#d4d4d8';
+    g.textAlign = 'left';
+    g.fillText('Audio track · ' + fmtT(pos) + ' / ' + fmtT(dur), 10, 6);
   } else {
-    nodes.push(h('p', { class: 'note' }, 'এই পেজে সরাসরি মাইক চালু হচ্ছে না, তাই ফোনের নিজস্ব রেকর্ডার খুলবে (ফোনের রেকর্ডারের অরিজিনাল সাউন্ডই পাবেন)। রেকর্ডার খুললে এই স্ক্রিনের লিরিক্স দেখা যাবে না, তাই আগে লিরিক্স দেখে নিন। রেকর্ডিং শেষ হলে সেটি সিলেক্ট করুন।'));
-    nodes.push(h('label', { class: 'btn pri', for: 'capPick', onclick: () => { setTimeout(closeSheet, 400); } }, 'ফোনের রেকর্ডার খুলুন'));
+    g.fillStyle = '#85858c';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = '13px Inter, system-ui, sans-serif';
+    g.fillText('The audio track appears here while you record', W / 2, mid);
   }
-  nodes.push(h('div', { class: 'btns' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Close')));
-  $('#sheet').replaceChildren(...nodes.filter(Boolean));
 }
-async function startRec() {
-  const guide = !!lyView.guide && S.clips.length > 0;
-  let stream = null;
-  const clean = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 1 }, sampleRate: { ideal: 48000 } };
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: clean });
-  } catch (e1) {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e2) {
-      micDenied = true;
-      renderRec();
+function sampleLevel() {
+  const r = rec;
+  if (!r || !r.an || R.st !== 'rec') return;
+  r.an.getFloatTimeDomainData(r.data);
+  let m = 0;
+  for (let i = 0; i < r.data.length; i++) { const v = r.data[i] < 0 ? -r.data[i] : r.data[i]; if (v > m) m = v; }
+  r.lvl = Math.max(r.lvl || 0, m);
+  const target = Math.floor(elapsedOf(r) * 20);
+  while (R.peaks.length < target) { R.peaks.push(r.lvl); r.lvl = m; }
+}
+function recLoop(now) {
+  R.raf = 0;
+  if (recView.hidden) return;
+  const dt = Math.min(0.1, Math.max(0, (now - R.last) / 1000));
+  R.last = now;
+  if (R.st === 'rec') {
+    sampleLevel();
+    const box = $('#lyView');
+    if (box && lyView.scroll && performance.now() > R.userUntil) {
+      const mx = Math.max(0, box.scrollHeight - box.clientHeight);
+      R.lyPos = Math.min(mx, R.lyPos + lyView.speed * 8 * dt);
+      box.scrollTop = R.lyPos;
+    }
+  }
+  drawLane();
+  R.raf = requestAnimationFrame(recLoop);
+}
+function startLoop() {
+  if (R.raf) return;
+  R.last = performance.now();
+  R.raf = requestAnimationFrame(recLoop);
+}
+
+// ----- preview playback of the take -----
+function stopPlay(reset) {
+  if (R.src) {
+    const sn = R.src;
+    R.src = null;
+    if (R.playing && ctx) R.pOff = clamp(ctx.currentTime - R.pStart, 0, R.take ? R.take.buf.duration : 0);
+    try { sn.onended = null; sn.stop(); } catch (e) { /* ignore */ }
+  }
+  R.playing = false;
+  if (reset) R.pOff = 0;
+}
+function playTake() {
+  if (!R.take) return;
+  if (R.playing) { stopPlay(false); renderRec(); return; }
+  const c = ac();
+  if (c.state === 'suspended') c.resume();
+  const dur = R.take.buf.duration;
+  const off = R.pOff >= dur - 0.03 ? 0 : R.pOff;
+  const sn = c.createBufferSource();
+  sn.buffer = R.take.buf;
+  sn.connect(c.destination);
+  sn.onended = () => {
+    if (R.src !== sn) return;
+    R.src = null;
+    R.playing = false;
+    R.pOff = 0;
+    renderRec();
+  };
+  R.src = sn;
+  R.pStart = c.currentTime - off;
+  R.playing = true;
+  sn.start(0, off);
+  renderRec();
+}
+function seekTake(clientX) {
+  if (R.st !== 'review' || !R.take || !R.cv) return;
+  const r = R.cv.getBoundingClientRect();
+  const dur = R.take.buf.duration;
+  const t = clamp((clientX - r.left - 4) / Math.max(1, r.width - 8), 0, 1) * dur;
+  const was = R.playing;
+  stopPlay(false);
+  R.pOff = t;
+  if (was) playTake();
+}
+
+// ----- take actions -----
+function saveTake() {
+  const t = R.take;
+  if (!t) return;
+  stopPlay(true);
+  pushUndo();
+  placeBuf(t.buf, 'Recording', t.at, S.tr);
+  refreshLabels();
+  changed();
+  R.take = null;
+  R.peaks = [];
+  closeRecView(true);
+  toast('Recording saved on track ' + (S.tr + 1));
+}
+function discardTake() {
+  stopPlay(true);
+  R.take = null;
+  R.peaks = [];
+  R.st = 'idle';
+  R.delArm = false;
+}
+function closeRecView(force) {
+  if (rec) return;
+  if (!force && R.st === 'review' && R.take) {
+    if (!R.closeArm) {
+      R.closeArm = true;
+      toast('This take is not saved. Tap close again to discard it.', 3000);
+      setTimeout(() => { R.closeArm = false; }, 3200);
       return;
     }
+    discardTake();
   }
-  const types = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
-  const mt = types.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
-  let mr;
-  try {
-    mr = new MediaRecorder(stream, mt ? { mimeType: mt, audioBitsPerSecond: 256000 } : { audioBitsPerSecond: 256000 });
-  } catch (e) {
-    mr = new MediaRecorder(stream);
+  R.closeArm = false;
+  stopPlay(true);
+  R.st = 'idle';
+  if (R.raf) { cancelAnimationFrame(R.raf); R.raf = 0; }
+  recView.hidden = true;
+  recView.replaceChildren();
+  R.cv = null;
+  updateRecBtn();
+}
+function finishRec(intent) {
+  const r = rec;
+  if (!r || r.stopping) return;
+  r.stopping = true;
+  r.intent = intent;
+  if (r.seg) { r.acc += (performance.now() - r.seg) / 1000; r.seg = 0; }
+  try { if (r.mr.state !== 'inactive') r.mr.stop(); else onRecStop(r); } catch (e) { onRecStop(r); }
+}
+async function onRecStop(ctrl) {
+  if (ctrl.done) return;
+  ctrl.done = true;
+  clearInterval(recTick);
+  try { ctrl.stream.getTracks().forEach((t) => t.stop()); } catch (e) { /* ignore */ }
+  try { ctrl.srcNode.disconnect(); } catch (e) { /* ignore */ }
+  rec = null;
+  if (S.playing) pause();
+  updateRecBtn();
+  const intent = ctrl.intent || 'review';
+  if (intent === 'discard') { R.st = 'idle'; R.peaks = []; renderRec(); return; }
+  if (intent === 'rerecord') { R.st = 'idle'; R.peaks = []; renderRec(); startRec(); return; }
+  if (!ctrl.chunks.length) { R.st = 'idle'; renderRec(); toast('Nothing was recorded'); return; }
+  const blob = new Blob(ctrl.chunks, { type: ctrl.mr.mimeType || 'audio/webm' });
+  let buf = null;
+  await busy('Processing recording…', async () => {
+    try { buf = await decode(await blob.arrayBuffer()); } catch (e) { buf = null; }
+  });
+  if (!buf) { R.st = 'idle'; renderRec(); toast('Could not read the recording'); return; }
+  R.take = { buf, at: ctrl.at };
+  R.pOff = 0;
+  R.playing = false;
+  R.st = 'review';
+  if (intent === 'save') { saveTake(); return; }
+  renderRec();
+}
+function pauseResume() {
+  const r = rec;
+  if (!r || r.stopping) return;
+  if (R.st === 'rec') {
+    try { r.mr.pause(); } catch (e) { /* ignore */ }
+    r.acc += (performance.now() - r.seg) / 1000;
+    r.seg = 0;
+    if (r.guide && S.playing) pause();
+    R.st = 'paused';
+  } else if (R.st === 'paused') {
+    try { r.mr.resume(); } catch (e) { /* ignore */ }
+    r.seg = performance.now();
+    if (r.guide) play();
+    R.st = 'rec';
   }
-  const chunks = [];
-  const at = S.t;
-  const t0 = performance.now();
-  mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
-  mr.onstop = async () => {
-    clearInterval(recTick);
-    stream.getTracks().forEach((t) => t.stop());
-    rec = null;
-    pause();
-    closeSheet();
-    updateRecBtn();
-    if (!chunks.length) return;
-    const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
-    await busy('Saving recording…', async () => {
-      try {
-        const buf = await decode(await blob.arrayBuffer());
-        pushUndo();
-        placeBuf(buf, 'Recording', at, S.tr);
-        refreshLabels();
-        changed();
-      } catch (e) { toast('রেকর্ডিং পড়া যায়নি'); }
-    });
-  };
-  rec = { mr, t0 };
-  mr.start(1000);
-  if (guide) play();
-  recTick = setInterval(updateRecBtn, 250);
   updateRecBtn();
   renderRec();
 }
+async function startRec() {
+  if (rec || R.starting) return;
+  R.starting = true;
+  try {
+    const guide = !!lyView.guide && S.clips.length > 0;
+    const c = ac();
+    if (c.state === 'suspended') { try { c.resume(); } catch (e) { /* ignore */ } }
+    let stream = null;
+    const clean = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 1 }, sampleRate: { ideal: 48000 } };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: clean });
+    } catch (e1) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e2) {
+        micDenied = true;
+        renderRec();
+        return;
+      }
+    }
+    const types = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
+    const mt = types.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+    let mr;
+    try {
+      mr = new MediaRecorder(stream, mt ? { mimeType: mt, audioBitsPerSecond: 256000 } : { audioBitsPerSecond: 256000 });
+    } catch (e) {
+      mr = new MediaRecorder(stream);
+    }
+    if (guide && S.t >= projectEnd() - 0.01) S.t = 0;
+    const at = S.t;
+    const ctrl = { mr, chunks: [], at, guide, stream, acc: 0, seg: performance.now(), lvl: 0, stopping: false, done: false, intent: 'review' };
+    try {
+      ctrl.srcNode = c.createMediaStreamSource(stream);
+      ctrl.an = c.createAnalyser();
+      ctrl.an.fftSize = 1024;
+      ctrl.data = new Float32Array(ctrl.an.fftSize);
+      ctrl.srcNode.connect(ctrl.an);
+    } catch (e) { ctrl.an = null; }
+    mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) ctrl.chunks.push(ev.data); };
+    mr.onstop = () => onRecStop(ctrl);
+    rec = ctrl;
+    R.take = null;
+    R.peaks = [];
+    R.pOff = 0;
+    R.st = 'rec';
+    mr.start(1000);
+    if (guide) play();
+    recTick = setInterval(updateRecBtn, 250);
+    updateRecBtn();
+    renderRec();
+  } finally {
+    R.starting = false;
+  }
+}
+
+// ----- the recording screen -----
+function cbtn(icon, label, onclick, cls) {
+  const b = h('button', { class: 'cb ' + (cls || ''), type: 'button', onclick });
+  b.innerHTML = '<span class="cc">' + ico(icon) + '</span><span class="cl">' + label + '</span>';
+  return b;
+}
+function sw(label, on, onchange) {
+  const b = h('button', { class: 'sw', type: 'button', role: 'switch', 'aria-checked': String(!!on) }, h('i', {}), h('span', {}, label));
+  b.addEventListener('click', () => {
+    const v = b.getAttribute('aria-checked') !== 'true';
+    b.setAttribute('aria-checked', String(v));
+    onchange(v);
+  });
+  return b;
+}
+function renderRec() {
+  recView.hidden = false;
+  if (lyView.id && !getLy(lyView.id)) lyView.id = null;
+  const cur = getLy(lyView.id);
+  const active = R.st === 'rec' || R.st === 'paused';
+  const review = R.st === 'review' && !!R.take;
+  const canMic = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  const nodes = [];
+
+  // header
+  const closeB = h('button', { class: 'ib' + (active ? ' hid' : ''), type: 'button', 'aria-label': 'Close', onclick: () => closeRecView(false) });
+  closeB.innerHTML = ico('close');
+  nodes.push(h('div', { class: 'rhead' }, h('h2', {}, 'Record'), closeB));
+
+  // lyrics picker (hidden while recording)
+  if (!active) {
+    const sel = h('select', { id: 'lySel', 'aria-label': 'Choose lyrics' },
+      h('option', { value: '' }, lyrics.length ? 'Lyrics: none (tap to choose)' : 'No lyrics yet'));
+    lyrics.forEach((l) => sel.append(h('option', { value: l.id }, l.title || 'Untitled')));
+    sel.value = lyView.id || '';
+    sel.addEventListener('change', () => { lyView.id = sel.value || null; R.lyPos = 0; renderRec(); });
+    const ib = (icon, label, fn, dis, cls) => { const b = h('button', { class: 'sq ' + (cls || ''), type: 'button', 'aria-label': label, title: label, disabled: !!dis, onclick: fn }); b.innerHTML = ico(icon); return b; };
+    let armed = false;
+    const delLy = ib('del', 'Delete lyrics', async () => {
+      if (!cur) return;
+      if (!armed) { armed = true; delLy.classList.add('arm'); toast('Tap the bin again to delete these lyrics', 2500); setTimeout(() => { armed = false; delLy.classList.remove('arm'); }, 2600); return; }
+      lyrics = lyrics.filter((l) => l.id !== cur.id);
+      lyView.id = null;
+      await saveLyrics();
+      renderRec();
+    }, !cur);
+    nodes.push(h('div', { class: 'lyrow' }, sel,
+      ib('add', 'New lyrics', () => renderLyEdit(null)),
+      ib('edit', 'Edit lyrics', () => { if (cur) renderLyEdit(cur); }, !cur),
+      delLy));
+  }
+
+  // lyrics view
+  const emptyMsg = lyrics.length ? 'Pick your lyrics above to read them here while you record.' : 'Add lyrics with the + button to read them here while you record. This is optional.';
+  const box = h('div', { class: 'lyview' + (cur ? '' : ' empty'), id: 'lyView' }, h('div', { class: 'lytxt' }, cur ? (cur.text || '(This lyric is empty)') : emptyMsg));
+  box.style.fontSize = lyView.size + 'px';
+  box.addEventListener('scroll', () => {
+    if (Math.abs(box.scrollTop - R.lyPos) > 2) { R.lyPos = box.scrollTop; R.userUntil = performance.now() + 700; }
+  });
+  nodes.push(box);
+
+  // lyrics tools: auto-scroll switch, speed, text size
+  const spd = h('b', {});
+  const upd = () => { spd.textContent = String(lyView.speed); };
+  const setSpeed = (d) => { lyView.speed = clamp(lyView.speed + d, 1, 10); upd(); };
+  const setSize = (d) => { lyView.size = clamp(lyView.size + d, 14, 44); box.style.fontSize = lyView.size + 'px'; };
+  const step = (label, aria, fn) => h('button', { class: 'st', type: 'button', 'aria-label': aria, onclick: fn }, label);
+  nodes.push(h('div', { class: 'rtools' },
+    sw('Auto-scroll', lyView.scroll, (v) => { lyView.scroll = v; }),
+    h('div', { class: 'stp', title: 'Scroll speed' }, step('−', 'Slower', () => setSpeed(-1)), h('span', {}, 'Speed ', spd), step('+', 'Faster', () => setSpeed(1))),
+    h('div', { class: 'stp', title: 'Text size' }, step('A−', 'Smaller text', () => setSize(-2)), step('A+', 'Larger text', () => setSize(2)))));
+  upd();
+
+  // audio track lane
+  const cv = h('canvas', { class: 'lane', 'aria-label': 'Audio track' });
+  let seeking = false;
+  cv.addEventListener('pointerdown', (e) => { if (R.st !== 'review') return; seeking = true; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } seekTake(e.clientX); });
+  cv.addEventListener('pointermove', (e) => { if (seeking) seekTake(e.clientX); });
+  cv.addEventListener('pointerup', () => { seeking = false; });
+  cv.addEventListener('pointercancel', () => { seeking = false; });
+  R.cv = cv;
+  nodes.push(cv);
+
+  // status line
+  const stat = R.st === 'rec' ? ['live', 'Recording…'] : R.st === 'paused' ? ['hold', 'Paused'] : review ? ['done', 'Take ready. Listen, then save'] : ['', 'Ready'];
+  nodes.push(h('div', { class: 'rstat' }, h('i', { class: stat[0] }), h('span', {}, stat[1])));
+
+  // controls
+  if (canMic) {
+    const delB = cbtn('del', 'Delete', () => {
+      if (!R.delArm) {
+        R.delArm = true;
+        delB.querySelector('.cl').textContent = 'Sure?';
+        delB.classList.add('arm');
+        setTimeout(() => { if (R.delArm) { R.delArm = false; delB.querySelector('.cl').textContent = 'Delete'; delB.classList.remove('arm'); } }, 2500);
+        return;
+      }
+      R.delArm = false;
+      if (active) finishRec('discard');
+      else { discardTake(); renderRec(); }
+    }, 'sm');
+    let row;
+    if (active) {
+      row = [
+        delB,
+        R.st === 'rec' ? cbtn('pause', 'Pause', pauseResume, 'main amber') : cbtn('recdot', 'Resume', pauseResume, 'main red'),
+        cbtn('stop', 'Finish', () => finishRec('review'), 'sm')
+      ];
+    } else if (review) {
+      row = [
+        delB,
+        cbtn('rerec', 'Re-record', () => { discardTake(); renderRec(); startRec(); }, 'sm'),
+        cbtn(R.playing ? 'pause' : 'play', R.playing ? 'Pause' : 'Play', playTake, 'main light'),
+        cbtn('check', 'Save', saveTake, 'sm ok')
+      ];
+    } else {
+      row = [cbtn('mic', 'Tap to record', startRec, 'main red')];
+    }
+    nodes.push(h('div', { class: 'ctl' }, row));
+    if (!active && !review) {
+      if (S.clips.length) nodes.push(sw('Hear my other tracks while recording (use headphones)', lyView.guide, (v) => { lyView.guide = v; }));
+      nodes.push(h('p', { class: 'hint' }, '1  Choose lyrics (optional)   2  Tap the red button   3  Listen, then save'));
+    }
+    if (micDenied) {
+      nodes.push(h('p', { class: 'note' }, 'The microphone is blocked here. Allow it for this page, or open the page directly in your browser. You can also use the phone recorder below.'));
+    }
+  }
+  if (!canMic || micDenied) {
+    if (!canMic) nodes.push(h('p', { class: 'note' }, 'This browser cannot record inside the page, so the phone recorder will open instead.'));
+    nodes.push(h('label', { class: 'btn pri', for: 'capPick', onclick: () => { setTimeout(() => closeRecView(true), 400); } }, 'Open Phone Recorder'));
+  }
+
+  recView.replaceChildren(...nodes);
+  box.scrollTop = R.lyPos;
+  drawLane();
+  startLoop();
+}
 function toggleRec() {
-  if (rec) { rec.mr.stop(); return; }
   renderRec();
-  $('#scrim').hidden = false;
 }
 function updateRecBtn() {
   const b = $('#bRec');
   if (rec) {
     b.className = 'big rec';
-    b.innerHTML = ico('stop') + '<span>' + recLabel() + '</span>';
-    const rs = $('#recStop');
-    if (rs) rs.textContent = recLabel();
+    b.innerHTML = ico(R.st === 'paused' ? 'pause' : 'stop') + '<span>' + recLabel() + '</span>';
   } else {
     b.className = 'big';
     b.innerHTML = ico('mic') + '<span>Record Audio</span>';
@@ -1757,7 +2633,7 @@ function saveSheet(wav) {
     document.body.append(a);
     a.click();
     setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 5000);
-    toast('ডাউনলোড শুরু হয়েছে। Downloads ফোল্ডারে ' + name + ' পাবেন', 5000);
+    toast('Download started. Find it in your Downloads folder: ' + name + '', 5000);
   } }, 'Download WAV')];
   const file = new File([blob], name, { type: 'audio/wav' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1765,10 +2641,10 @@ function saveSheet(wav) {
       try { await navigator.share({ files: [file], title: 'Studio mix' }); } catch (e) { /* cancelled */ }
     } }, 'Share…'));
   }
-  openSheet('Save mix', [h('p', { class: 'note' }, 'মিক্স তৈরি হয়েছে (' + mb + ' MB, WAV)।'), h('div', { class: 'stack' }, btns)], null);
+  openSheet('Save mix', [h('p', { class: 'note' }, 'Mix ready (' + mb + ' MB, WAV).'), h('div', { class: 'stack' }, btns)], null);
 }
 async function exportMix() {
-  if (!S.clips.length) { toast('আগে অডিও যোগ করুন'); return; }
+  if (!S.clips.length) { toast('Add audio first'); return; }
   try {
     pause();
     const dl = await getDL();
@@ -1776,7 +2652,7 @@ async function exportMix() {
     let wav = null;
     await busy('Mixing…', async () => {
       const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-      if (!OAC) throw new Error('এই ব্রাউজারে মিক্স করা যাচ্ছে না');
+      if (!OAC) throw new Error('Mixing is not supported in this browser');
       const sr = 44100;
       const len = Math.max(1, Math.ceil((projectEnd() + 0.05) * sr));
       const oc = new OAC(2, len, sr);
@@ -1785,17 +2661,17 @@ async function exportMix() {
       wav = encodeWav(out);
       if (dl) blob = makeZip('studio-mix.wav', wav);
     });
-    if (!wav) { toast('মিক্স তৈরি হয়নি, আবার চেষ্টা করুন', 5000); return; }
+    if (!wav) { toast('Mix failed, try again', 5000); return; }
     if (!dl) { saveSheet(wav); return; }
     try {
       await dl.save({ filename: 'studio-mix.zip', data: blob });
-      toast('সেভ হয়েছে (zip এর ভেতরে WAV ফাইল)');
+      toast('Saved (WAV file inside a zip)');
     } catch (e) {
-      if (!e || e.code !== 'declined') toast('সেভ করা যায়নি');
+      if (!e || e.code !== 'declined') toast('Could not save');
     }
   } catch (e) {
     $('#busy').hidden = true;
-    toast('সেভ করা যায়নি: ' + ((e && e.message) || e), 6000);
+    toast('Could not save: ' + ((e && e.message) || e), 6000);
   }
 }
 
@@ -1810,6 +2686,7 @@ function act(k, label, need, fn, cls) {
     a.fn();
   } });
   b.innerHTML = ico(k) + (label ? '<span>' + label + '</span>' : '');
+  b.setAttribute('data-k', k);
   a.el = b;
   ACTIONS.push(a);
   return b;
@@ -1829,10 +2706,7 @@ function updateEnabled() {
   ACTIONS.forEach((a) => {
     const on = enabled(a.need);
     a.el.classList.toggle('off', !on);
-    if (a.k === 'speed') {
-      a.el.disabled = !on;
-      a.el.setAttribute('aria-disabled', on ? 'false' : 'true');
-    }
+    a.el.setAttribute('aria-disabled', on ? 'false' : 'true');
   });
 }
 let lastPlaying = null;
@@ -1931,6 +2805,93 @@ function holdScrub(btn, dir) {
   btn.addEventListener('contextmenu', (e) => e.preventDefault());
   btn.style.touchAction = 'none';
 }
+// ---------- bottom tool strip: scrolls sideways, hold a tool for 1.4 seconds to drag it to a new place ----------
+const TOOL_KEY = 'mts_tools_v1';
+function initToolDrag() {
+  const row = $('#row2');
+  const defaults = [...row.children].map((el) => el.dataset.k);
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(TOOL_KEY) || 'null'); } catch (e) { saved = null; }
+  if (Array.isArray(saved)) {
+    const by = {};
+    [...row.children].forEach((el) => { by[el.dataset.k] = el; });
+    saved.filter((k) => by[k]).concat(defaults.filter((k) => !saved.includes(k))).forEach((k) => row.append(by[k]));
+  }
+  const save = () => { try { localStorage.setItem(TOOL_KEY, JSON.stringify([...row.children].map((el) => el.dataset.k))); } catch (e) { /* ignore */ } };
+  let st = null;
+  let swallow = false;
+  let raf = 0;
+  const place = () => {
+    if (!st || !st.on) return;
+    const el = st.el;
+    const sibs = [...row.children].filter((k) => k !== el);
+    let idx = 0;
+    for (const k of sibs) {
+      const r = k.getBoundingClientRect();
+      if (r.left + r.width / 2 < st.px) idx++;
+    }
+    if ([...row.children].indexOf(el) !== idx) row.insertBefore(el, sibs[idx] || null);
+    const rr = row.getBoundingClientRect();
+    const center = rr.left - row.scrollLeft + el.offsetLeft + el.offsetWidth / 2;
+    el.style.transform = 'translateX(' + (st.px - center) + 'px) scale(1.08)';
+  };
+  const loop = () => {
+    if (!st || !st.on) return;
+    const rr = row.getBoundingClientRect();
+    if (st.px < rr.left + 40) row.scrollLeft -= 9;
+    else if (st.px > rr.right - 40) row.scrollLeft += 9;
+    place();
+    raf = requestAnimationFrame(loop);
+  };
+  const end = () => {
+    if (!st) return;
+    clearTimeout(st.timer);
+    cancelAnimationFrame(raf);
+    if (st.on) {
+      st.el.classList.remove('lift');
+      st.el.style.transform = '';
+      row.classList.remove('sorting');
+      save();
+      swallow = true;
+      setTimeout(() => { swallow = false; }, 450);
+    }
+    st = null;
+  };
+  row.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('.tb');
+    if (!el || !row.contains(el) || st) return;
+    const cur = { el, id: e.pointerId, x0: e.clientX, y0: e.clientY, px: e.clientX, on: false, timer: 0 };
+    cur.timer = setTimeout(() => {
+      if (st !== cur) return;
+      cur.on = true;
+      el.classList.add('lift');
+      row.classList.add('sorting');
+      try { el.setPointerCapture(cur.id); } catch (x) { /* ignore */ }
+      try { if (navigator.vibrate) navigator.vibrate(25); } catch (x) { /* ignore */ }
+      toast('Drag left or right to move this tool', 1800);
+      place();
+      raf = requestAnimationFrame(loop);
+    }, 1400);
+    st = cur;
+  });
+  row.addEventListener('pointermove', (e) => {
+    if (!st || e.pointerId !== st.id) return;
+    if (!st.on) {
+      if (Math.abs(e.clientX - st.x0) > 10 || Math.abs(e.clientY - st.y0) > 10) { clearTimeout(st.timer); st = null; }
+      return;
+    }
+    st.px = e.clientX;
+    place();
+  });
+  row.addEventListener('pointerup', end);
+  row.addEventListener('pointercancel', end);
+  row.addEventListener('lostpointercapture', end);
+  row.addEventListener('contextmenu', (e) => e.preventDefault());
+  row.addEventListener('click', (e) => {
+    if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; }
+  }, true);
+  document.addEventListener('touchmove', (e) => { if (st && st.on && e.cancelable) e.preventDefault(); }, { passive: false });
+}
 function buildPanel() {
   $('#row1').append(
     h('div', { class: 'grp' },
@@ -1951,9 +2912,11 @@ function buildPanel() {
     act('vol', 'Volume', 'clip', sheetEdit),
     act('speed', 'Change Speed', 'clip', sheetSpeed),
     act('pitch', 'Change Pitch', 'clip', sheetPitch),
+    act('denoise', 'Noise Remove', 'clip', sheetDenoise),
     act('repl', 'Replace', 'clip', askReplace),
     act('copy', 'Copy', 'clip', doCopy),
     act('paste', 'Paste', 'paste', doPaste));
+  initToolDrag();
   const pm = $('#row1 .grp.mid');
   pm.children[0].setAttribute('aria-label', 'Previous');
   pm.children[2].setAttribute('aria-label', 'Next');
@@ -1972,20 +2935,20 @@ function buildPanel() {
   updateRecBtn();
   $('#bMulti').addEventListener('click', () => {
     S.multi = !S.multi;
-    toast(S.multi ? 'মাল্টি-সিলেক্ট চালু: ক্লিপে ট্যাপ করে বেছে নিন, আবার ট্যাপ করলে ডিসিলেক্ট হবে' : 'মাল্টি-সিলেক্ট বন্ধ');
+    toast(S.multi ? 'Multi-select on: tap clips to select, tap again to deselect' : 'Multi-select off');
     changed();
   });
   $('#bAll').addEventListener('click', () => {
-    if (!S.clips.length) { toast('সিলেক্ট করার মতো কোনো অডিও নেই'); return; }
+    if (!S.clips.length) { toast('No audio to select'); return; }
     S.multi = true;
     setSel(S.clips.map((c) => c.id));
     S.tr = selClip().track;
     S.trPick = true;
     changed();
-    toast(S.clips.length + 'টি অডিও সিলেক্ট হয়েছে');
+    toast(S.clips.length + ' clip(s) selected');
   });
   $('#bNone').addEventListener('click', () => {
-    if (!selIds().length) { toast('কোনো অডিও সিলেক্ট করা নেই'); return; }
+    if (!selIds().length) { toast('No audio selected'); return; }
     S.sel = null;
     S.trPick = false;
     changed();
@@ -1994,9 +2957,22 @@ function buildPanel() {
   $('#bUndo').innerHTML = ico('undo');
   $('#bRedo').innerHTML = ico('redo');
   $('#bSave').innerHTML = ico('save');
+  $('#bMulti').innerHTML = ico('multisel');
+  $('#bAll').innerHTML = ico('selall');
+  $('#bNone').innerHTML = ico('desel');
   $('#bUndo').addEventListener('click', undo);
   $('#bRedo').addEventListener('click', redo);
   $('#bSave').addEventListener('click', exportMix);
+  // full screen: status bar stays hidden; swipe down from the top edge to peek at notifications
+  const fsOn = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const fsReq = () => {
+    const el = document.documentElement;
+    const f = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!f) return;
+    try { const r = f.call(el, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (e) { /* ignore */ }
+  };
+  document.addEventListener('pointerdown', () => { if (!fsOn()) fsReq(); }, { passive: true });
+
   $('#bBack').addEventListener('click', () => {
     const stack = h('div', { class: 'stack' },
       h('button', { class: 'btn warn', type: 'button', onclick: () => {
@@ -2006,7 +2982,7 @@ function buildPanel() {
         S.sel = null;
         S.t = 0;
         changed();
-        toast('সব ট্র্যাক খালি করা হয়েছে। Undo দিলে ফিরে আসবে।');
+        toast('All tracks cleared. Undo brings them back.');
       } }, 'Clear all tracks'),
       h('button', { class: 'btn', type: 'button', onclick: () => {
         closeSheet();
@@ -2126,7 +3102,7 @@ async function restoreProject() {
   } catch (e) {
     /* nothing saved */
   } finally {
-    if (ok) { changed(); toast('আগের প্রজেক্ট ফিরে এসেছে'); }
+    if (ok) { changed(); toast('Previous project restored'); }
     restoring = false;
   }
 }
@@ -2148,5 +3124,11 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDra
 })();
 </script>
 
-<script>if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("SW failed", e); });
+  });
+}
+</script>
 </body></html>
