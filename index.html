@@ -343,6 +343,48 @@ input[type=range] { accent-color: #c9ccff; }
 .btn { border-radius: 14px; background: #1c1f25; }
 .btn.pri { background: #fff; color: #0b0c0e; }
 .scrim { background: rgba(0, 0, 0, .6); }
+
+/* ===== responsive fixes: narrow / zoomed / short screens ===== */
+.top h1 { white-space: nowrap; }
+.row2 .tb { flex: 0 0 max(17.5%, 62px); overflow: hidden; overflow-wrap: break-word; }
+.row2 .tb span, .row2 .tb { line-height: 1.2; }
+.big { min-width: 0; padding: 0 6px; }
+.big span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row1 { flex-wrap: wrap; row-gap: 2px; }
+.selbar { flex-wrap: wrap; }
+@media (max-width: 420px) {
+  .top { gap: 0; padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .top h1 { position: static; transform: none; top: auto; left: auto; flex: 1 1 0; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; font-size: 16px; }
+  #bUndo { margin-left: 0; }
+  .ib { width: 40px; height: 40px; flex: none; }
+  .ib svg { width: 21px; height: 21px; }
+  .panel { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .row1 { justify-content: center; gap: 2px 4px; }
+  .row1 .tb:not(.t) { min-width: 44px; }
+  .row1 .tb { font-size: 9.5px; }
+  .grp.mid { gap: 4px; }
+  .grp.mid > :nth-child(2) { width: 50px; height: 50px; min-width: 50px; }
+  .row2 .tb { font-size: 9.5px; gap: 5px; }
+  .row2 .tb svg { width: 44px; height: 44px; padding: 11px; }
+  .big { height: 50px; font-size: 13px; gap: 6px; }
+  .big svg { width: 20px; height: 20px; flex: none; }
+}
+@media (max-width: 320px) {
+  .row2 .tb { flex-basis: max(25%, 58px); }
+  .big { font-size: 12px; gap: 4px; height: 46px; border-radius: 15px; }
+  .big svg { width: 17px; height: 17px; }
+  .big-row { gap: 6px; }
+  .pill { font-size: 11px; }
+}
+@media (max-height: 700px) {
+  .row2 { padding: 2px 0; }
+  .row2 .tb svg { width: 40px; height: 40px; padding: 10px; }
+  .row2 .tb { gap: 4px; }
+  .big { height: 44px; }
+  .big-row { margin-top: 4px; }
+  .panel { padding-block: 6px max(8px, env(safe-area-inset-bottom, 0px)); }
+  .selbar { padding-bottom: 4px; }
+}
 </style>
 
 <div class="app">
@@ -1020,12 +1062,21 @@ function draw() {
   for (const c of S.clips) if (isSel(c.id)) drawClip(c, ph);
   g2.restore();
   if (!S.clips.length) {
-    g2.fillStyle = '#7a7a82';
-    g2.font = '500 14px Inter, "Noto Sans Bengali", system-ui, sans-serif';
     g2.textAlign = 'center';
-    g2.fillText('Tap Select Audio or Record Audio', W / 2, RULER + 70);
+    const fitFont = (txt) => {
+      let fs = 14;
+      for (; fs > 8; fs -= 0.5) {
+        g2.font = '500 ' + fs + 'px Inter, "Noto Sans Bengali", system-ui, sans-serif';
+        if (g2.measureText(txt).width <= W - 24) break;
+      }
+    };
+    const t1 = 'Tap Select Audio or Record Audio', t2 = 'One track appears for each audio you add';
+    g2.fillStyle = '#7a7a82';
+    fitFont(t1);
+    g2.fillText(t1, W / 2, RULER + 70);
     g2.fillStyle = '#5c5c63';
-    g2.fillText('One track appears for each audio you add', W / 2, RULER + 96);
+    fitFont(t2);
+    g2.fillText(t2, W / 2, RULER + 96);
   }
   const pg = g2.createLinearGradient(0, 30, 0, Hh);
   pg.addColorStop(0, '#FF6B3D');
