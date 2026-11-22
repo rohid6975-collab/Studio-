@@ -1090,12 +1090,12 @@ function refreshLabels() {
   });
 }
 let toastTimer = 0;
-function toast(msg) {
+function toast(msg, ms) {
   const el = $('#toast');
   el.textContent = msg;
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
+  toastTimer = setTimeout(() => { el.hidden = true; }, ms || 3200);
 }
 async function busy(msg, fn) {
   $('#busyMsg').textContent = msg;
@@ -1565,26 +1565,57 @@ function getDL() {
   }
   return dlP;
 }
+function saveSheet(wav) {
+  const blob = new Blob([wav], { type: 'audio/wav' });
+  const name = 'studio-mix.wav';
+  const mb = (blob.size / 1048576).toFixed(1);
+  const btns = [h('button', { class: 'btn pri', type: 'button', onclick: () => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.append(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 5000);
+    toast('ডাউনলোড শুরু হয়েছে। Downloads ফোল্ডারে ' + name + ' পাবেন', 5000);
+  } }, 'Download WAV')];
+  const file = new File([blob], name, { type: 'audio/wav' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    btns.push(h('button', { class: 'btn', type: 'button', onclick: async () => {
+      try { await navigator.share({ files: [file], title: 'Studio mix' }); } catch (e) { /* cancelled */ }
+    } }, 'Share…'));
+  }
+  openSheet('Save mix', [h('p', { class: 'note' }, 'মিক্স তৈরি হয়েছে (' + mb + ' MB, WAV)।'), h('div', { class: 'stack' }, btns)], null);
+}
 async function exportMix() {
   if (!S.clips.length) { toast('আগে অডিও যোগ করুন'); return; }
-  pause();
-  const dl = await getDL();
-  if (!dl) { toast('এই ভিউতে সেভ করা যাচ্ছে না'); return; }
-  let blob = null;
-  await busy('Mixing…', async () => {
-    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    const sr = 44100;
-    const len = Math.ceil((projectEnd() + 0.05) * sr);
-    const oc = new OAC(2, len, sr);
-    scheduleAll(oc, oc.destination, 0, 0);
-    const out = await oc.startRendering();
-    blob = makeZip('studio-mix.wav', encodeWav(out));
-  });
   try {
-    await dl.save({ filename: 'studio-mix.zip', data: blob });
-    toast('সেভ হয়েছে (zip এর ভেতরে WAV ফাইল)');
+    pause();
+    const dl = await getDL();
+    let blob = null;
+    let wav = null;
+    await busy('Mixing…', async () => {
+      const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      if (!OAC) throw new Error('এই ব্রাউজারে মিক্স করা যাচ্ছে না');
+      const sr = 44100;
+      const len = Math.max(1, Math.ceil((projectEnd() + 0.05) * sr));
+      const oc = new OAC(2, len, sr);
+      scheduleAll(oc, oc.destination, 0, 0);
+      const out = await oc.startRendering();
+      wav = encodeWav(out);
+      if (dl) blob = makeZip('studio-mix.wav', wav);
+    });
+    if (!wav) { toast('মিক্স তৈরি হয়নি, আবার চেষ্টা করুন', 5000); return; }
+    if (!dl) { saveSheet(wav); return; }
+    try {
+      await dl.save({ filename: 'studio-mix.zip', data: blob });
+      toast('সেভ হয়েছে (zip এর ভেতরে WAV ফাইল)');
+    } catch (e) {
+      if (!e || e.code !== 'declined') toast('সেভ করা যায়নি');
+    }
   } catch (e) {
-    if (!e || e.code !== 'declined') toast('সেভ করা যায়নি');
+    $('#busy').hidden = true;
+    toast('সেভ করা যায়নি: ' + ((e && e.message) || e), 6000);
   }
 }
 
@@ -1675,6 +1706,7 @@ function changed() {
   refreshLabels();
   updateUI();
   requestDraw();
+  scheduleSave();
 }
 
 let suppressClick = false;
@@ -1815,12 +1847,122 @@ document.addEventListener('keydown', (e) => {
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
 });
 
+// ---------- autosave (IndexedDB) ----------
+let dbP = null;
+function openDB() {
+  if (!dbP) {
+    dbP = new Promise((res, rej) => {
+      const rq = indexedDB.open('mtstudio', 1);
+      rq.onupgradeneeded = () => { rq.result.createObjectStore('meta'); rq.result.createObjectStore('bufs'); };
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+  }
+  return dbP;
+}
+const rqP = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const txDone = (tx) => new Promise((res, rej) => { tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+const bufIds = new WeakMap();
+const savedIds = new Set();
+let bufSeq = 1, saveTimer = 0, saving = false, restoring = false;
+function scheduleSave() {
+  if (restoring) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProject, 900);
+}
+async function saveProject() {
+  if (restoring) return;
+  if (saving) { scheduleSave(); return; }
+  saving = true;
+  try {
+    const db = await openDB();
+    const used = new Set();
+    const clips = S.clips.map((c) => {
+      let id = bufIds.get(c.buf);
+      if (!id) { id = 'b' + Date.now().toString(36) + (bufSeq++); bufIds.set(c.buf, id); }
+      used.add(id);
+      const o = {};
+      for (const k in c) if (k !== 'buf') o[k] = c[k];
+      o.bufId = id;
+      return o;
+    });
+    const fresh = [];
+    for (const c of S.clips) {
+      const id = bufIds.get(c.buf);
+      if (!savedIds.has(id) && !fresh.some((n) => n.id === id)) fresh.push({ id, buf: c.buf });
+    }
+    if (fresh.length) {
+      const tx = db.transaction('bufs', 'readwrite');
+      const st = tx.objectStore('bufs');
+      for (const n of fresh) {
+        const chans = [];
+        for (let i = 0; i < n.buf.numberOfChannels; i++) chans.push(n.buf.getChannelData(i).slice());
+        st.put({ sr: n.buf.sampleRate, chans }, n.id);
+      }
+      await txDone(tx);
+      fresh.forEach((n) => savedIds.add(n.id));
+    }
+    const tx2 = db.transaction(['meta', 'bufs'], 'readwrite');
+    tx2.objectStore('meta').put({ v: 1, clips, tracks: S.tracks, nextId, pps: S.pps }, 'project');
+    const keys = await rqP(tx2.objectStore('bufs').getAllKeys());
+    for (const k of keys) if (!used.has(k)) { tx2.objectStore('bufs').delete(k); savedIds.delete(k); }
+    await txDone(tx2);
+  } catch (e) {
+    /* storage unavailable */
+  } finally {
+    saving = false;
+  }
+}
+async function restoreProject() {
+  restoring = true;
+  let ok = false;
+  try {
+    const db = await openDB();
+    const meta = await rqP(db.transaction('meta').objectStore('meta').get('project'));
+    if (!meta || !meta.clips || !meta.clips.length || S.clips.length) return;
+    const cache = new Map();
+    const clips = [];
+    for (const c of meta.clips) {
+      let buf = cache.get(c.bufId);
+      if (!buf) {
+        const rec = await rqP(db.transaction('bufs').objectStore('bufs').get(c.bufId));
+        if (!rec) continue;
+        buf = makeBuf(rec.chans, rec.sr);
+        cache.set(c.bufId, buf);
+        bufIds.set(buf, c.bufId);
+        savedIds.add(c.bufId);
+      }
+      const o = Object.assign({}, c, { buf });
+      delete o.bufId;
+      clips.push(o);
+    }
+    if (!clips.length || S.clips.length) return;
+    S.clips = clips;
+    if (Array.isArray(meta.tracks) && meta.tracks.length) S.tracks = meta.tracks;
+    nextId = Math.max(nextId, meta.nextId || 1);
+    if (meta.pps > 0) S.pps = meta.pps;
+    S.t = 0;
+    ok = true;
+  } catch (e) {
+    /* nothing saved */
+  } finally {
+    if (ok) { changed(); toast('আগের প্রজেক্ট ফিরে এসেছে'); }
+    restoring = false;
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { clearTimeout(saveTimer); saveProject(); }
+});
+window.addEventListener('pagehide', () => { clearTimeout(saveTimer); saveProject(); });
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* ignore */ }
+
 // ---------- start ----------
 buildLabels();
 buildPanel();
 new ResizeObserver(resize).observe(stage);
 resize();
 updateUI();
+restoreProject();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDraw);
 })();
 </script>
