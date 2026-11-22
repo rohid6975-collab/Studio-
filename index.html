@@ -140,6 +140,15 @@ input[type=range] { width: 100%; accent-color: #fff; height: 28px; margin: 0; }
 .busy { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .6); display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; font-size: 15px; }
 .spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #555; border-top-color: #fff; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.sheet select, .sheet textarea, .sheet input[type=text] { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #2a2a2e; color: #fff; font: inherit; font-size: 15px; padding: 10px; -webkit-user-select: text; user-select: text; }
+.sheet select { height: 44px; }
+.sheet textarea { min-height: 38vh; resize: vertical; line-height: 1.6; }
+.lyview { background: #141416; border: 1px solid var(--line); border-radius: 12px; padding: 14px; white-space: pre-wrap; overflow: auto; max-height: 36vh; line-height: 1.7; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.lyview.empty { color: var(--dim); font-size: 14px; }
+.chk { display: flex; gap: 10px; align-items: center; font-size: 14px; color: #d4d4d8; }
+.chk input { width: 20px; height: 20px; accent-color: #fff; flex: none; }
+.btn.rec { background: var(--rec); color: #fff; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
 @media (min-width: 520px) {
   .tb { font-size: 11.5px; }
@@ -785,7 +794,8 @@ function draw() {
   g2.translate(0, -S.scrollY);
   g2.fillStyle = '#101012';
   if (S.clips.length && S.tr < usedCount() && (S.trPick || S.sel)) g2.fillRect(0, RULER + S.tr * ROW, W, ROW);
-  for (const c of S.clips) drawClip(c, ph);
+  for (const c of S.clips) if (!isSel(c.id)) drawClip(c, ph);
+  for (const c of S.clips) if (isSel(c.id)) drawClip(c, ph);
   g2.restore();
   if (!S.clips.length) {
     g2.fillStyle = '#7a7a82';
@@ -965,15 +975,12 @@ function endPointer(e) {
       return;
     }
     const cs = d.orig.map((o) => o.c);
-    const res = settleClips(cs);
-    if (res === 'fail') {
-      revertClips(d.orig, true);
-      toast('এখানে জায়গা নেই, ক্লিপ আগের জায়গায় ফিরে গেছে');
-      return;
-    }
-    if (res === 'moved') toast('ক্লিপ ওভারল্যাপ হওয়ায় অন্য ট্র্যাকে সরানো হয়েছে');
+    const dragged = new Set(cs.map((c) => c.id));
+    const into = cs.some((c) => overlaps(c.track, c.start, c.dur, c.id));
+    S.clips = S.clips.filter((c) => !dragged.has(c.id)).concat(cs);
     S.tr = selClip() ? selClip().track : S.tr;
     changed();
+    if (into) toast('অডিও পাশের অডিওর লেয়ারের ভিতরে ঢুকেছে');
     return;
   }
   if (e.type === 'pointercancel') return;
@@ -1025,10 +1032,44 @@ function clipAt(x, y) {
   }
   return null;
 }
+let lastTap = null;
+function moveSelToRow(row, x) {
+  const cs = selClips();
+  const p = selClip();
+  if (!cs.length || !p) return;
+  let d = Math.min(row, usedCount()) - p.track;
+  const minTr = Math.min.apply(null, cs.map((c) => c.track));
+  if (minTr + d < 0) d = -minTr;
+  const t = Math.max(0, S.t + (x - W * 0.5) / S.pps);
+  let ds = t - p.start;
+  const minStart = Math.min.apply(null, cs.map((c) => c.start));
+  if (minStart + ds < 0) ds = -minStart;
+  if (d === 0 && Math.abs(ds) < 0.001) { toast('অডিও আগে থেকেই এখানে আছে'); changed(); return; }
+  pushUndo();
+  cs.forEach((c) => { c.track += d; c.start += ds; });
+  const ids = new Set(cs.map((c) => c.id));
+  const into = cs.some((c) => overlaps(c.track, c.start, c.dur, c.id));
+  S.clips = S.clips.filter((c) => !ids.has(c.id)).concat(cs);
+  S.tr = p.track;
+  S.trPick = true;
+  revealTrack(S.tr);
+  changed();
+  toast(into ? 'অডিও অন্য অডিওর লেয়ারের ভিতরে ঢুকেছে' : 'অডিও এখানে সরানো হয়েছে');
+}
 function tap(x, y) {
   if (y < RULER) return;
   const row = Math.floor((y - RULER + S.scrollY) / ROW);
   if (row < 0) return;
+  const hit0 = clipAt(x, y);
+  const now = performance.now();
+  if (!hit0 && lastTap && now - lastTap.t < 380 && Math.abs(x - lastTap.x) < 36 && Math.abs(y - lastTap.y) < 36 && lastTap.ids.length) {
+    const ids = lastTap.ids;
+    lastTap = null;
+    setSel(ids);
+    moveSelToRow(row, x);
+    return;
+  }
+  lastTap = { t: now, x, y, ids: hit0 ? [] : selIds() };
   if (row >= usedCount()) {
     if (!S.multi) {
       S.sel = null;
@@ -1124,7 +1165,7 @@ function openSheet(title, nodes, applyFn, applyLabel) {
   $('#sheet').replaceChildren(h('h2', {}, title), ...[].concat(nodes), h('div', { class: 'btns' }, btns));
   $('#scrim').hidden = false;
 }
-$('#scrim').addEventListener('click', (e) => { if (e.target === $('#scrim')) closeSheet(); });
+$('#scrim').addEventListener('click', (e) => { if (e.target === $('#scrim') && !rec) closeSheet(); });
 function slider(o) {
   const out = h('output', { for: o.id }, o.fmt(o.value));
   const inp = h('input', { type: 'range', id: o.id, min: o.min, max: o.max, step: o.step, value: o.value });
@@ -1289,18 +1330,15 @@ function revertClips(orig, popUndo) {
 function moveHere() {
   const cs = selClips();
   if (!cs.length) return;
-  const orig = cs.map((c) => ({ c, start: c.start, track: c.track }));
   pushUndo();
   const delta = S.t - Math.min.apply(null, cs.map((c) => c.start));
   cs.forEach((c) => { c.start = Math.max(0, c.start + delta); });
-  const res = settleClips(cs);
-  if (res === 'fail') {
-    revertClips(orig, true);
-    toast('এখানে জায়গা নেই');
-    return;
-  }
+  const ids = new Set(cs.map((c) => c.id));
+  const into = cs.some((c) => overlaps(c.track, c.start, c.dur, c.id));
+  S.clips = S.clips.filter((c) => !ids.has(c.id)).concat(cs);
   if (selClip()) S.tr = selClip().track;
   changed();
+  if (into) toast('অডিও অন্য অডিওর লেয়ারের ভিতরে ঢুকেছে');
 }
 function splitTarget() {
   const t = S.t;
@@ -1439,23 +1477,157 @@ capPick.addEventListener('change', async () => {
 });
 let rec = null;
 let recTick = 0;
-function recFallback() {
-  const lab = h('label', { class: 'btn pri', for: 'capPick', onclick: () => { setTimeout(closeSheet, 400); } }, 'ফোনের রেকর্ডার খুলুন');
-  openSheet('Record Audio', [h('p', { class: 'note' }, 'এই পেজে সরাসরি মাইক চালু হচ্ছে না। নিচের বাটনে ট্যাপ করে ফোনের রেকর্ডার দিয়ে রেকর্ড করুন, রেকর্ডিং অ্যাপে রেকর্ডিং শেষ হলে সেটি সিলেক্ট করুন।'), lab], null);
-}
-async function toggleRec() {
-  if (rec) { rec.mr.stop(); return; }
+let micDenied = false;
+let lyrics = [];
+const lyView = { id: null, size: 22, delArm: false, guide: false };
+const newLyId = () => 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const getLy = (id) => lyrics.find((l) => l.id === id) || null;
+function micPossible() {
+  if (micDenied) return false;
   const pp = document.permissionsPolicy || document.featurePolicy;
   const allowed = !pp || !pp.allowsFeature || pp.allowsFeature('microphone');
-  if (!allowed || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { recFallback(); return; }
-  let stream;
+  return allowed && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+}
+async function loadLyrics() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (e) {
-    recFallback();
-    return;
+    const db = await openDB();
+    const v = await rqP(db.transaction('meta').objectStore('meta').get('lyrics'));
+    if (Array.isArray(v)) lyrics = v;
+  } catch (e) { /* nothing saved */ }
+}
+async function saveLyrics() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('meta', 'readwrite');
+    tx.objectStore('meta').put(lyrics, 'lyrics');
+    await txDone(tx);
+    return true;
+  } catch (e) { return false; }
+}
+function recLabel() {
+  const s = rec ? Math.floor((performance.now() - rec.t0) / 1000) : 0;
+  return 'Stop · ' + Math.floor(s / 60) + ':' + pad(s % 60, 2);
+}
+function sizeBar() {
+  const set = (d) => {
+    lyView.size = clamp(lyView.size + d, 14, 44);
+    const el = $('#lyView');
+    if (el) el.style.fontSize = lyView.size + 'px';
+  };
+  return h('div', { class: 'mini' },
+    h('button', { class: 'btn', type: 'button', onclick: () => set(-2) }, 'A−  ছোট'),
+    h('button', { class: 'btn', type: 'button', onclick: () => set(2) }, 'A+  বড়'));
+}
+function lyBox(cur, tall, msg) {
+  const box = h('div', { class: 'lyview' + (cur ? '' : ' empty'), id: 'lyView' }, cur ? (cur.text || '(এই লিরিক্স খালি)') : msg);
+  if (cur) box.style.fontSize = lyView.size + 'px';
+  if (tall) box.style.maxHeight = '52vh';
+  return box;
+}
+function renderLyEdit(cur) {
+  const title = h('input', { type: 'text', id: 'lyTitle', maxlength: 60, placeholder: 'গানের নাম / শিরোনাম', value: cur ? cur.title : '', 'aria-label': 'শিরোনাম' });
+  const text = h('textarea', { id: 'lyText', placeholder: 'এখানে লিরিক্স লিখুন…', 'aria-label': 'লিরিক্স' });
+  text.value = cur ? cur.text : '';
+  $('#sheet').replaceChildren(
+    h('h2', {}, cur ? 'লিরিক্স এডিট' : 'নতুন লিরিক্স'),
+    title,
+    text,
+    h('div', { class: 'btns' },
+      h('button', { class: 'btn', type: 'button', onclick: renderRec }, 'Cancel'),
+      h('button', { class: 'btn pri', type: 'button', onclick: async () => {
+        const t = title.value.trim() || 'নামহীন লিরিক্স';
+        if (cur) {
+          cur.title = t;
+          cur.text = text.value;
+          cur.t = Date.now();
+        } else {
+          const n = { id: newLyId(), title: t, text: text.value, t: Date.now() };
+          lyrics.push(n);
+          lyView.id = n.id;
+        }
+        const ok = await saveLyrics();
+        renderRec();
+        if (!ok) toast('লিরিক্স সেভ করা যায়নি');
+      } }, 'Save')));
+  setTimeout(() => { try { (cur ? text : title).focus(); } catch (e) { /* ignore */ } }, 50);
+}
+function renderRecording() {
+  const cur = getLy(lyView.id);
+  const stop = h('button', { class: 'btn rec', type: 'button', id: 'recStop', onclick: () => { if (rec) rec.mr.stop(); } }, recLabel());
+  $('#sheet').replaceChildren(
+    h('h2', {}, cur ? cur.title : 'রেকর্ড হচ্ছে'),
+    lyBox(cur, true, 'কোনো লিরিক্স বেছে নেওয়া হয়নি।'),
+    sizeBar(),
+    stop);
+}
+function renderRec() {
+  if (rec) { renderRecording(); return; }
+  lyView.delArm = false;
+  if (lyView.id && !getLy(lyView.id)) lyView.id = null;
+  const cur = getLy(lyView.id);
+  const sel = h('select', { id: 'lySel', 'aria-label': 'লিরিক্স বেছে নিন' },
+    h('option', { value: '' }, lyrics.length ? 'লিরিক্স ছাড়া / বেছে নিন' : 'কোনো লিরিক্স নেই'));
+  lyrics.forEach((l) => sel.append(h('option', { value: l.id }, l.title || 'নামহীন')));
+  sel.value = lyView.id || '';
+  sel.addEventListener('change', () => { lyView.id = sel.value || null; renderRec(); });
+  const del = h('button', { class: 'btn warn', type: 'button', disabled: !cur, onclick: async () => {
+    if (!cur) return;
+    if (!lyView.delArm) { lyView.delArm = true; del.textContent = 'নিশ্চিত? আবার চাপুন'; return; }
+    lyrics = lyrics.filter((l) => l.id !== cur.id);
+    lyView.id = null;
+    await saveLyrics();
+    renderRec();
+  } }, 'ডিলিট');
+  const mini = h('div', { class: 'mini' },
+    h('button', { class: 'btn', type: 'button', onclick: () => renderLyEdit(null) }, 'নতুন লিরিক্স'),
+    h('button', { class: 'btn', type: 'button', disabled: !cur, onclick: () => { if (cur) renderLyEdit(cur); } }, 'এডিট'),
+    del);
+  const nodes = [
+    h('h2', {}, 'Record Audio'),
+    sel,
+    lyBox(cur, false, lyrics.length ? 'উপরে থেকে একটি লিরিক্স বেছে নিন, অথবা নতুন লিরিক্স যোগ করুন।' : 'এখনো কোনো লিরিক্স নেই। "নতুন লিরিক্স" চেপে লিখে সেভ করুন, তারপর দেখে দেখে রেকর্ড করুন।'),
+    cur ? sizeBar() : null,
+    mini
+  ];
+  if (micPossible()) {
+    if (S.clips.length) {
+      const cb = h('input', { type: 'checkbox', id: 'recGuide' });
+      cb.checked = !!lyView.guide;
+      cb.addEventListener('change', () => { lyView.guide = cb.checked; });
+      nodes.push(h('label', { class: 'chk', for: 'recGuide' }, cb, 'রেকর্ডের সময় আগের ট্র্যাক বাজবে (হেডফোন লাগান)'));
+    }
+    nodes.push(h('p', { class: 'note' }, 'নয়েজ ফিল্টার ও অটো-ভলিউম বন্ধ রেখে হাই-কোয়ালিটিতে অরিজিনাল সাউন্ড রেকর্ড হবে। ফোন মুখের কাছে রাখুন।'));
+    nodes.push(h('button', { class: 'btn rec', type: 'button', onclick: startRec }, 'রেকর্ড শুরু করুন'));
+  } else {
+    nodes.push(h('p', { class: 'note' }, 'এই পেজে সরাসরি মাইক চালু হচ্ছে না, তাই ফোনের নিজস্ব রেকর্ডার খুলবে (ফোনের রেকর্ডারের অরিজিনাল সাউন্ডই পাবেন)। রেকর্ডার খুললে এই স্ক্রিনের লিরিক্স দেখা যাবে না, তাই আগে লিরিক্স দেখে নিন। রেকর্ডিং শেষ হলে সেটি সিলেক্ট করুন।'));
+    nodes.push(h('label', { class: 'btn pri', for: 'capPick', onclick: () => { setTimeout(closeSheet, 400); } }, 'ফোনের রেকর্ডার খুলুন'));
   }
-  const mr = new MediaRecorder(stream);
+  nodes.push(h('div', { class: 'btns' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Close')));
+  $('#sheet').replaceChildren(...nodes.filter(Boolean));
+}
+async function startRec() {
+  const guide = !!lyView.guide && S.clips.length > 0;
+  let stream = null;
+  const clean = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 1 }, sampleRate: { ideal: 48000 } };
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: clean });
+  } catch (e1) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e2) {
+      micDenied = true;
+      renderRec();
+      return;
+    }
+  }
+  const types = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
+  const mt = types.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+  let mr;
+  try {
+    mr = new MediaRecorder(stream, mt ? { mimeType: mt, audioBitsPerSecond: 256000 } : { audioBitsPerSecond: 256000 });
+  } catch (e) {
+    mr = new MediaRecorder(stream);
+  }
   const chunks = [];
   const at = S.t;
   const t0 = performance.now();
@@ -1465,6 +1637,7 @@ async function toggleRec() {
     stream.getTracks().forEach((t) => t.stop());
     rec = null;
     pause();
+    closeSheet();
     updateRecBtn();
     if (!chunks.length) return;
     const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
@@ -1479,17 +1652,24 @@ async function toggleRec() {
     });
   };
   rec = { mr, t0 };
-  mr.start();
-  if (S.clips.length) play();
+  mr.start(1000);
+  if (guide) play();
   recTick = setInterval(updateRecBtn, 250);
   updateRecBtn();
+  renderRec();
+}
+function toggleRec() {
+  if (rec) { rec.mr.stop(); return; }
+  renderRec();
+  $('#scrim').hidden = false;
 }
 function updateRecBtn() {
   const b = $('#bRec');
   if (rec) {
-    const s = Math.floor((performance.now() - rec.t0) / 1000);
     b.className = 'big rec';
-    b.innerHTML = ico('stop') + '<span>Stop · ' + Math.floor(s / 60) + ':' + pad(s % 60, 2) + '</span>';
+    b.innerHTML = ico('stop') + '<span>' + recLabel() + '</span>';
+    const rs = $('#recStop');
+    if (rs) rs.textContent = recLabel();
   } else {
     b.className = 'big';
     b.innerHTML = ico('mic') + '<span>Record Audio</span>';
@@ -1962,6 +2142,7 @@ buildPanel();
 new ResizeObserver(resize).observe(stage);
 resize();
 updateUI();
+loadLyrics();
 restoreProject();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDraw);
 })();
