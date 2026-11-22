@@ -1,12 +1,12 @@
-const CACHE = "multitrack-studio-v3";
+const CACHE = "multitrack-studio-v5";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-maskable-512.png",
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (e) => {
@@ -26,11 +26,21 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
+  // Never intercept the worker itself or the manifest
+  if (url.pathname.endsWith("/sw.js") || url.pathname.endsWith(".webmanifest")) return;
+
   // Page navigations: network first, fall back to cache (works offline)
   if (req.mode === "navigate") {
     e.respondWith(
       fetch(req)
-        .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("./index.html", copy)); return res; })
+        .then((res) => {
+          // only keep a good copy of the real app page (never a 404 or another file)
+          if (res.ok && new URL(req.url).pathname === new URL("./", self.location).pathname) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          }
+          return res;
+        })
         .catch(() => caches.match("./index.html"))
     );
     return;
