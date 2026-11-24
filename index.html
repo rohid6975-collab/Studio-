@@ -388,6 +388,16 @@ input[type=range] { accent-color: #c9ccff; }
 
 /* no double-tap zoom / pinch zoom of the page */
 html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* save sheet: file name + icon buttons */
+.namerow { display: flex; align-items: center; gap: 8px; background: #2a2a2e; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; height: 50px; }
+.namerow .ficon svg { width: 22px; height: 22px; display: block; color: var(--dim); }
+.namerow input.fname { flex: 1; min-width: 0; border: 0; background: transparent; color: #fff; font: inherit; font-size: 16px; padding: 0; height: 100%; outline: none; }
+.namerow .fext { color: var(--dim); font-size: 15px; font-weight: 600; }
+.sheet h2 .h2i { display: inline-flex; vertical-align: middle; }
+.sheet h2 .h2i svg { width: 22px; height: 22px; }
+.iconbtns .btn { display: flex; align-items: center; justify-content: center; }
+.iconbtns .btn svg { width: 24px; height: 24px; }
 </style>
 
 <div class="app">
@@ -612,6 +622,8 @@ const ICONS = {
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   recdot: '<circle cx="12" cy="12" r="6.5" fill="currentColor"/>',
   rerec: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  download: '<path d="M12 4v11"/><path d="m7.5 11 4.5 4.5 4.5-4.5"/><path d="M5 19.5h14"/>',
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6M8.2 13.2l7.6 3.6"/>',
   note: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor"/>'
 };
 const ico = (k) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>';
@@ -2675,27 +2687,65 @@ function getDL() {
   }
   return dlP;
 }
+function mixName() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return 'multitrack-mix-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+}
+function cleanName(v) {
+  let n = String(v || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').replace(/\.wav$/i, '').trim().replace(/^\.+/, '');
+  if (!n) n = mixName();
+  return n.slice(0, 80) + '.wav';
+}
 function saveSheet(wav) {
   const blob = new Blob([wav], { type: 'audio/wav' });
-  const name = 'studio-mix.wav';
   const mb = (blob.size / 1048576).toFixed(1);
-  const btns = [h('button', { class: 'btn pri', type: 'button', onclick: () => {
+  const inp = h('input', { type: 'text', class: 'fname', value: mixName(), maxlength: '80', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'File name' });
+  const row = h('div', { class: 'namerow' }, h('span', { class: 'ficon' }), inp, h('span', { class: 'fext' }, '.wav'));
+  row.firstChild.innerHTML = ico('note');
+  const saveFile = async () => {
+    const name = cleanName(inp.value);
+    // desktop browsers: let the user choose the folder
+    if (window.showSaveFilePicker) {
+      try {
+        const fh = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'WAV audio', accept: { 'audio/wav': ['.wav'] } }] });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+        closeSheet();
+        toast('Saved: ' + fh.name, 4000);
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
     document.body.append(a);
     a.click();
-    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 5000);
-    toast('Download started. Find it in your Downloads folder: ' + name + '', 5000);
-  } }, 'Download WAV')];
-  const file = new File([blob], name, { type: 'audio/wav' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    btns.push(h('button', { class: 'btn', type: 'button', onclick: async () => {
-      try { await navigator.share({ files: [file], title: 'Studio mix' }); } catch (e) { /* cancelled */ }
-    } }, 'Share…'));
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 10000);
+    closeSheet();
+    toast('Saved to Downloads: ' + name, 4500);
+  };
+  const mk = (icon, label, fn, cls) => {
+    const b = h('button', { class: 'btn ' + (cls || ''), type: 'button', 'aria-label': label, title: label, onclick: fn });
+    b.innerHTML = ico(icon);
+    return b;
+  };
+  const btns = [mk('download', 'Save', saveFile, 'pri')];
+  const probe = new File([blob], 'x.wav', { type: 'audio/wav' });
+  if (navigator.canShare && navigator.canShare({ files: [probe] })) {
+    btns.push(mk('share', 'Share', async () => {
+      try { await navigator.share({ files: [new File([blob], cleanName(inp.value), { type: 'audio/wav' })], title: 'Multitrack mix' }); } catch (e) { /* cancelled */ }
+    }));
   }
-  openSheet('Save mix', [h('p', { class: 'note' }, 'Mix ready (' + mb + ' MB, WAV).'), h('div', { class: 'stack' }, btns)], null);
+  btns.push(mk('close', 'Close', closeSheet));
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveFile(); } });
+  $('#sheet').replaceChildren(h('h2', {}, h('span', { class: 'h2i' }, ''), ' ' + mb + ' MB'), row, h('div', { class: 'btns iconbtns' }, btns));
+  $('#sheet').querySelector('.h2i').innerHTML = ico('save');
+  $('#scrim').hidden = false;
 }
 async function exportMix() {
   if (!S.clips.length) { toast('Add audio first'); return; }
